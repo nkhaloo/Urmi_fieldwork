@@ -79,7 +79,6 @@ ggplot(vowels_nm, aes(x = F2, y = F1, color = emphasis, label = vowel)) +
   ylab("Mean F1 (Hz)") + 
   coord_fixed(ratio = 10/6)
 
-1 + 1
 
 
 ######vowel plot with plain syllable vs. mixed_plain syllable#####
