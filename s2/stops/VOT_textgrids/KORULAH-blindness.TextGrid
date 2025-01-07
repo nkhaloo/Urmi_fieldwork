@@ -1,0 +1,38 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 2.9708843537414964 
+tiers? <exists> 
+size = 2 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "word" 
+        xmin = 0 
+        xmax = 2.9708843537414964 
+        intervals: size = 3 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.8106608981319758 
+            text = "" 
+        intervals [2]:
+            xmin = 0.8106608981319758 
+            xmax = 2.2154687065004137 
+            text = "KORULAH" 
+        intervals [3]:
+            xmin = 2.2154687065004137 
+            xmax = 2.9708843537414964 
+            text = "" 
+    item [2]:
+        class = "TextTier" 
+        name = "VOT" 
+        xmin = 0 
+        xmax = 2.9708843537414964 
+        points: size = 2 
+        points [1]:
+            number = 0.9729984282862193 
+            mark = "release" 
+        points [2]:
+            number = 1.153527022279838 
+            mark = "voicing" 

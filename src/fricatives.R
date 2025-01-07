@@ -2,7 +2,7 @@ library(tidyverse)
 library(ggdist)
 
 #load csv
-raw_data <- read.csv("/Users/ritalavi/Desktop/Urmi_fieldwork/data/fricatives/fricative_results.csv", header = FALSE)
+raw_data <- read.csv("/Users/ritalavi/Desktop/Urmi_fieldwork/s1/fricatives/fricative_results_s1.csv", header = FALSE)
 
 # Use the first row as the actual column names
 column_names <- as.character(unlist(raw_data[1, ]))
