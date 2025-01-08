@@ -1,0 +1,26 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 2.737392290249433 
+tiers? <exists> 
+size = 1 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "fricatives" 
+        xmin = 0 
+        xmax = 2.737392290249433 
+        intervals: size = 3 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.8304594511014676 
+            text = "" 
+        intervals [2]:
+            xmin = 0.8304594511014676 
+            xmax = 1.0628363242048935 
+            text = "x11ex" 
+        intervals [3]:
+            xmin = 1.0628363242048935 
+            xmax = 2.737392290249433 
+            text = "" 

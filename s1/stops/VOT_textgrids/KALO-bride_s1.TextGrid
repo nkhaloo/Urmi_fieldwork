@@ -31,8 +31,8 @@ item []:
         xmax = 1.4827437641723356 
         points: size = 2 
         points [1]:
-            number = 0.41518681320051504 
+            number = 0.41204606096113394 
             mark = "release" 
         points [2]:
-            number = 0.4879992637522165 
+            number = 0.4741590352252131 
             mark = "voicing" 
