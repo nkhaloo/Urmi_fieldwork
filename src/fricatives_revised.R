@@ -82,7 +82,10 @@ summary(model_s2)
 
 #plot model adjusted results
 #speaker 1 
-em_means_s1 <- emmeans(model_s1, ~ fricative*emphasis)
+
+#####change to standard error to keep consistent####### 
+
+em_means_s1 <- emmeans(model_s1, ~ fricative + emphasis)
 
 em_means_s1_df <- as.data.frame(em_means_s1)
 
@@ -99,7 +102,7 @@ s1_plot <- ggplot(em_means_s1_df, aes(x = fricative, y = emmean, color = emphasi
         axis.text.x = element_text(size = 14))
 
 #speaker 2
-em_means_s2 <- emmeans(model_s2, ~ fricative*emphasis)
+em_means_s2 <- emmeans(model_s2, ~ fricative + emphasis)
 
 em_means_s2_df <- as.data.frame(em_means_s2)
 
