@@ -5,12 +5,12 @@ library(patchwork)
 library(cowplot)
 
 #load csv's 
-raw_data_s1 <- read_csv("/Users/ritalavi/Desktop/Urmi_fieldwork/s1/fricatives/results_s1.csv")
-raw_data_s2 <- read_csv("/Users/ritalavi/Desktop/Urmi_fieldwork/s2/fricatives/results_s2.csv")
+raw_data_s1 <- read_csv("/Users/ritalavi/Desktop/Urmi_fieldwork/s1/fricatives/results_s1.csv", col_names = FALSE)
+raw_data_s2 <- read_csv("/Users/ritalavi/Desktop/Urmi_fieldwork/s2/fricatives/results_s2.csv", col_names = FALSE)
 
 
 # Use the first row as the actual column names
-column_names <- as.character(unlist(raw_data[1, ]))
+column_names <- as.character(unlist(raw_data_s1[1, ]))
 
 # Remove any rows that are duplicates of the column names
 cleaned_data_s1 <- raw_data_s1 %>%
@@ -64,7 +64,7 @@ process_fricative_data <- function(df) {
   return(df)
 }
 
-#run fucntion of s1 data 
+#run function of s1 data 
 df_s1 <- process_fricative_data(df_s1)
 df_s2 <- process_fricative_data(df_s2)
 
