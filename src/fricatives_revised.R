@@ -95,7 +95,8 @@ s1_plot <- ggplot(em_means_s1_df, aes(x = fricative, y = emmean, color = emphasi
                 position = position_dodge(width = 0.8), width = 0.2) +  # Error bars
   labs(
     x = "Fricative",
-    y = "COG"
+    y = "COG", 
+    title = "Speaker 1"
   ) +
   theme_minimal() +
   theme(legend.position = "top",
@@ -112,7 +113,8 @@ s2_plot <- ggplot(em_means_s2_df, aes(x = fricative, y = emmean, color = emphasi
                 position = position_dodge(width = 0.8), width = 0.2) +  # Error bars
   labs(
     x = "Fricative",
-    y = ""
+    y = "",
+    title = "Speaker 2"
   ) +
   theme_minimal() +
   theme(legend.position = "top",
@@ -131,7 +133,12 @@ final_plot <- s1_plot + s2_plot +
     axis.title.y = element_text(size = 14),  # Ensures the y-axis title appears
     axis.text.x = element_text(size = 14),
     axis.text.y = element_text(size = 14)
-  )
+  ) &
+  labs(color = "Emphasis")
+
+
+print(final_plot)
+
 
 
 

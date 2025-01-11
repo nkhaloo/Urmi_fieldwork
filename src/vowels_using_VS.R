@@ -58,11 +58,11 @@ vowels <- vowels %>%
   mutate(vowel = case_when(
     str_starts(Label, "ah") ~ "ɑ",   # If label starts with "ah", assign "ɑ"
     str_starts(Label, "a") & !str_starts(Label, "ah") ~ "æ",  # If label starts with "a" but not "ah", assign "æ"
-    str_starts(Label, "i") ~ "i",
-    str_starts(Label, "e") ~ "ɛ",
-    str_starts(Label, "o") ~ "ø",
-    str_starts(Label, "u") ~ "y",
-    str_starts(Label, "ex") ~ "ə",
+    str_starts(Label, "i") ~ "i",  # If label starts with "i", assign "i"
+    str_starts(Label, "e") & !str_starts(Label, "ex") ~ "ɛ",  # If label starts with "e" but not "ex", assign "ɛ"
+    str_starts(Label, "ex") ~ "ə",  # If label starts with "ex", assign "ə"
+    str_starts(Label, "o") ~ "ø",  # If label starts with "o", assign "ø"
+    str_starts(Label, "u") ~ "y",  # If label starts with "u", assign "y"
     TRUE ~ NA_character_  # This ensures that if no condition is met, 'vowel' will be NA
   ))
 
@@ -98,8 +98,14 @@ vowels <- vowels %>%
 vowels <- vowels %>%
   filter(!is.na(vowel))
 
-#calculate malanobis distance for formants 
-vmahalanobis = function (dat) {
+
+#####outlier detection######
+#just f1 and f2
+vowels_f1f2 <- vowels %>%
+  select(-F3)
+
+# Function to calculate Mahalanobis distance for F1, F2
+vmahalanobis_f1f2 = function (dat) {
   if (nrow(dat) < 25) {
     dat$zF1F2 = NA
     return(dat)
@@ -112,27 +118,87 @@ vmahalanobis = function (dat) {
   dat
 }
 
-# Distance larger than 6 is considered as outlier    #MG: smaller numbers = more outliers. 
-distance_cutoff = 6
+# Set the outlier threshold
+distance_cutoff <- 6
 
 # Perform Mahalanobis on dataset
-vowels_filtered =  vowels %>%                
+vowels_f1f2 =  vowels_f1f2 %>%                 #MG: this was cut from a dataset called "tot_fin"
   group_by(vowel) %>%
-  do(vmahalanobis(.)) %>%
+  do(vmahalanobis_f1f2(.)) %>%
   ungroup() %>%
   mutate(formant_outlier = NA)
 
+
 # Visualize the formants with flagged values
-vowels_filtered %>%
+vowels_f1f2 %>%
   filter(is.na(formant_outlier)) %>%
-  ggplot(aes(x = F2, y = F1, color = zF1F2 > distance_cutoff)) +       
+  ggplot(aes(x = F2, y = F1, color = zF1F2 > distance_cutoff)) +       #MG: sF2 and sF1 = Snack values from VS
   geom_point(size = 0.6) +
   facet_wrap(.~vowel)+
   scale_y_reverse(limits = c(2000,0),position = "right") +
   scale_x_reverse(limits = c(3500,0),position = "top")+
   theme_bw()
 
+# Remove flagged values
+for (i in 1:nrow(vowels_f1f2)) {
+  if (!is.na(vowels_f1f2$zF1F2[i])) {
+    if (vowels_f1f2$zF1F2[i] > distance_cutoff){
+      vowels_f1f2$formant_outlier[i] = "outlier"
+    }
+  }
+  
+}
 
+# Visualize the vowel formant after exclusion
+vowels_f1f2 %>%
+  filter(is.na(formant_outlier)) %>%
+  ggplot(aes(x = F2, y = F1)) +
+  geom_point(size = 0.6) +
+  #geom_text()+
+  facet_wrap(.~vowel)+
+  #geom_density_2d() +
+  #  scale_color_manual(values=c('#a6611a','#dfc27d','#018571'))+
+  scale_y_reverse(limits = c(2000,0),position = "right") +
+  scale_x_reverse(limits = c(3500,0),position = "top")+
+  theme_bw()
+
+
+#filter out outliers 
+vowels_f1f2_filtered <- vowels_f1f2 %>%
+  filter(formant_outlier != "outlier" | is.na(formant_outlier))
+
+#filter out crazy outlier for /y/
+vowels_f1f2_filtered <- vowels_f1f2_filtered %>%
+  filter(!(vowel == "y" & F2 > 2000))
+
+
+#####vowel plot with plain vs. emphatic##### 
+vowels_nm <- vowels_f1f2_filtered %>% 
+  filter(emphasis != "mixed") 
+
+vowels_nm_means <- vowels_nm %>%
+  group_by(vowel, emphasis) %>%
+  summarise(mean_f1 = mean(F1), 
+            mean_f2 = mean(F2))
+
+# plot
+plot <- ggplot(vowels_nm, aes(x = F2, y = F1, color = emphasis, label = vowel)) + 
+  geom_text(aes(label = vowel), alpha = 0.3, size = 4) + 
+  geom_label(data = vowels_nm_means, 
+             aes(x = mean_f2, y = mean_f1, label = vowel, color = emphasis), 
+             size = 5, 
+             fill = "white",  
+             fontface = "bold") + 
+  scale_x_reverse() + 
+  scale_y_reverse() + 
+  scale_color_manual(values = c("plain" = "blue", "emphatic" = "red")) +
+  stat_ellipse(aes(group = Label), alpha = 0.3) +  
+  theme_classic() + 
+  theme(legend.position = "right") + 
+  xlab("Mean F2 (Hz)") + 
+  ylab("Mean F1 (Hz)") + 
+  coord_fixed(ratio = 10/6) +
+  guides(color = guide_legend(title = "Word Status"))
 
 
 
