@@ -95,7 +95,7 @@ ggsave(filename = "/Users/ritalavi/Desktop/Urmi_fieldwork/data/figures/plain_vs_
 
 ###mixed versus emphatic words###
 vowels_np <- vowels %>% 
-  filter(!syllable_status %in% c("plain_mixed", "plain", "emphatic"))
+  filter(syllable_status == "mixed")
 
 vowels_np_means <- vowels_np %>%
   group_by(vowel, syllable_status) %>%
