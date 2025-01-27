@@ -2,6 +2,7 @@ library(tidyverse)
 library(lme4)
 library(lmerTest)
 library(emmeans)
+library(patchwork)
 
 #load csv's
 raw_data_s1 <- read_csv("/Users/ritalavi/Desktop/Urmi_fieldwork/s1/stops/results.csv", 

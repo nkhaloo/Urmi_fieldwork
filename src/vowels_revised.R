@@ -238,7 +238,7 @@ plot_mixed <- function(df) {
     # Semi-transparent mean labels from vowels_np_means for mixed vowels
     geom_label(data = filter(vowels_np_means, syllable_status == "mixed"), 
                aes(x = mean_f2, y = mean_f1, label = vowel),  # No color mapping
-               size = 8, 
+               size = 7, 
                fill = "lightgrey",  
                fontface = "bold",
                alpha = 0.5, 
@@ -258,6 +258,135 @@ plot_mixed <- function(df) {
 mixed_vowels_s1 <- plot_mixed(df_s1)
 mixed_vowels_s2 <- plot_mixed(df_s2)
   
+
+##### morphologically complex words ####
+#load csv's 
+mc_s1_raw <- read_csv("/Users/ritalavi/Desktop/Urmi_fieldwork/s1/morphologically_complex_words/results_praat.csv")
+mc_s2_raw <- read_csv("/Users/ritalavi/Desktop/Urmi_fieldwork/s2/morphologically_complex_words/results_praat.csv")
+
+#updated process_vowels function
+mc_vowels <- function(df) {
+  if ("Segment" %in% colnames(df)) {
+    df <- df %>%
+      # Create affix column based on last character of Segment
+      mutate(affix = case_when(
+        str_ends(Segment, "r") ~ "root",
+        str_ends(Segment, "s") ~ "suffix",
+        str_ends(Segment, "p") ~ "prefix",
+        TRUE ~ NA_character_
+      )) %>%
+      
+      # Remove final r, s, or p from Segment
+      mutate(Segment = str_replace(Segment, "[rsp]$", "")) %>%
+      
+      # Remove anything following "-" in Filename
+      mutate(Filename = sub("-.*", "", Filename)) %>%
+      
+      # Filter out rows where Segment starts with "xx"
+      filter(!str_starts(Segment, "xx")) %>%
+      
+      # Assign vowel values based on Segment
+      mutate(vowel = case_when(
+        str_starts(Segment, "ah") ~ "ɑ",
+        str_starts(Segment, "a") & !str_starts(Segment, "ah") ~ "æ",
+        str_starts(Segment, "i") ~ "i",
+        str_starts(Segment, "e") & !str_starts(Segment, "ex") ~ "ɛ",
+        str_starts(Segment, "ex") ~ "ə",
+        str_starts(Segment, "o") ~ "ø",
+        str_starts(Segment, "u") ~ "y",
+        TRUE ~ NA_character_
+      )) %>%
+      
+      # Create emphasis column
+      mutate(emphasis = case_when(
+        grepl("22", Segment) ~ "emphatic",
+        grepl("13$", Segment) ~ "mixed",
+        grepl("33", Segment) ~ "mixed",
+        TRUE ~ "plain"
+      )) %>%
+      
+      # Add syllable status column
+      mutate(syllable_status = case_when(
+        grepl("13$", Segment) ~ "plain_mixed",
+        grepl("33$", Segment) ~ "mixed",
+        grepl("22$", Segment) ~ "emphatic",
+        grepl("11$", Segment) ~ "plain",
+        TRUE ~ NA_character_
+      )) %>%
+      
+      # Filter out diphthongs (e.g., vowels starting with "j")
+      filter(!grepl("j", vowel)) 
+    
+    return(df)
+  } else {
+    stop("The dataframe does not have a 'Segment' column.")
+  }
+}
+
+#run function 
+mc_s1 <- mc_vowels(mc_s1_raw)
+mc_s2 <- mc_vowels(mc_s2_raw)
+
+#new function for plotting mc words 
+mc_plots <- function(vowel_df, affix_df, morph_type) {
+  # Filter vowels excluding "mixed" emphasis
+  vowels_nm <- vowel_df %>% 
+    filter(emphasis != "mixed") 
+  
+  # Compute mean F1 and F2 values
+  vowels_nm_means <- vowels_nm %>%
+    group_by(vowel, emphasis) %>%
+    summarise(mean_f1 = mean(F1), 
+              mean_f2 = mean(F2), 
+              .groups = "drop")
+  
+  # Filter for specified morph_type in affix_df
+  mc <- affix_df %>%
+    filter(affix == morph_type, emphasis %in% c("plain", "emphatic"))
+  
+  # Compute mean F1 and F2 values for suffixes
+  suffix_means <- mc %>%
+    group_by(vowel, emphasis) %>%
+    summarise(mean_f1 = mean(F1), 
+              mean_f2 = mean(F2), 
+              .groups = "drop")
+  
+  # Generate vowel plot
+  ggplot(vowels_nm, aes(x = F2, y = F1, color = emphasis, label = vowel)) + 
+    geom_text(aes(label = vowel), alpha = 0.3, size = 4) +  
+    geom_label(data = vowels_nm_means, 
+               aes(x = mean_f2, y = mean_f1, label = vowel, color = emphasis), 
+               size = 5, fill = "white", fontface = "bold") + 
+    geom_label(data = filter(suffix_means, emphasis == emphasis), 
+               aes(x = mean_f2, y = mean_f1, label = vowel, color = emphasis),  
+               size = 7, fontface = "bold", alpha = 0.5,
+               fill = ifelse(suffix_means$emphasis == "plain", "blue", "red"),  # Color inside the label
+               colour = "black",  # Black border
+               label.padding = unit(0.5, "lines"), 
+               label.r = unit(0.15, "lines")) +  
+    scale_x_reverse() + 
+    scale_y_reverse() + 
+    scale_color_manual(values = c("plain" = "blue", "emphatic" = "red")) +
+    stat_ellipse(aes(group = Segment), alpha = 0.3) +  
+    theme_classic() + 
+    theme(legend.position = "right") + 
+    xlab("Mean F2 (Hz)") + 
+    ylab("Mean F1 (Hz)") + 
+    coord_fixed(ratio = 10/6) +
+    guides(color = guide_legend(title = "Word Status"))
+}
+
+#suffixes
+s1_suffixes <- mc_plots(df_s1, mc_s1, "suffix")
+s2_suffixes <- mc_plots(df_s2, mc_s2, "suffix")
+
+#prefixes
+mc_s1_filtered <- mc_s1 %>% filter(vowel != "y")
+s1_prefixes <- mc_plots(df_s1, mc_s1_filtered, "prefix")
+s2_prefixes <- mc_plots(df_s2, mc_s2, "prefix")
+
+
+
 
 
 
