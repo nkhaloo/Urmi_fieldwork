@@ -3,6 +3,8 @@ library(lme4)
 library(emmeans)
 library(patchwork)
 library(cowplot)
+library(lmerTest)
+library(sjPlot)
 
 #load csv's 
 raw_data_s1 <- read_csv("/Users/ritalavi/Desktop/Urmi_fieldwork/s1/fricatives/results_s1.csv", col_names = FALSE)
@@ -69,78 +71,106 @@ df_s1 <- process_fricative_data(df_s1)
 df_s2 <- process_fricative_data(df_s2)
 
 
+####statistical analysis#####
 # Model for Speaker 1
+#dummy code emphasis 
+df_s1$emphasis_binary <- ifelse(df_s1$emphasis == "emphatic", 1, 0)
+#scale cog
 df_s1$cog <- as.numeric(df_s1$cog)
-model_s1 <- lmer(cog ~ fricative + emphasis + (1 |vowel), data = df_s1)
-summary(model_s1)
+df_s1$cog_scaled <- scale(df_s1$cog)
+
+mod_s1 <- glmer(emphasis_binary ~ cog_scaled + fricative + (1|vowel), df_s1, "binomial")
+summary(mod_s1)
+
+confint(mod_s1, method = "Wald")
 
 # Model for Speaker 2
+#dummy code emphasis 
+df_s2$emphasis_binary <- ifelse(df_s2$emphasis == "emphatic", 1, 0)
+#scale cog
 df_s2$cog <- as.numeric(df_s2$cog)
-model_s2 <- lmer(cog ~ fricative + emphasis + (1| vowel), data = df_s2)
-summary(model_s2)
+df_s2$cog_scaled <- scale(df_s2$cog)
+
+mod_s2 <- glmer(emphasis_binary ~ cog_scaled + fricative + (1|vowel), df_s2, "binomial")
+summary(mod_s2)
+
+confint(mod_s2, method = "Wald")
 
 
-#plot model adjusted results
-#speaker 1 
+#plotting  cog
+df_s1_summary <- df_s1 %>%
+  group_by(fricative, emphasis) %>%
+  summarise(
+    mean_cog = mean(cog),
+    SE = sd(cog) / sqrt(n())  # Standard Error
+  ) %>%
+  ungroup()
 
-#####change to standard error to keep consistent####### 
-
-em_means_s1 <- emmeans(model_s1, ~ fricative + emphasis)
-
-em_means_s1_df <- as.data.frame(em_means_s1)
-
-s1_plot <- ggplot(em_means_s1_df, aes(x = fricative, y = emmean, color = emphasis)) +
+# Plot
+# Calculate y-limits from both dataframes (df_s1_summary and df_s2_summary)
+s1 <- ggplot(df_s1_summary, aes(x = fricative, y = mean_cog, color = emphasis)) +
   geom_point(position = position_dodge(width = 0.8), size = 4) +  # Points
-  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), 
+  geom_errorbar(aes(ymin = mean_cog - SE, ymax = mean_cog + SE), 
                 position = position_dodge(width = 0.8), width = 0.2) +  # Error bars
   labs(
     x = "Fricative",
-    y = "COG", 
-    title = "Speaker 1"
+    y = "COG (dB)",
+    title = "Speaker 1",
+    color = "Emphasis"
   ) +
-  theme_minimal() +
-  theme(legend.position = "top",
-        axis.text.x = element_text(size = 14))
+  theme_classic() +
+  theme(
+    legend.position = "top",
+    axis.text.x = element_text(size = 14),
+    coord_cartesian(ylim = y_limits) 
+  )
 
-#speaker 2
-em_means_s2 <- emmeans(model_s2, ~ fricative + emphasis)
 
-em_means_s2_df <- as.data.frame(em_means_s2)
+df_s2_summary <- df_s2 %>%
+  group_by(fricative, emphasis) %>%
+  summarise(
+    mean_cog = mean(cog),
+    SE = sd(cog) / sqrt(n())  # Standard Error
+  ) %>%
+  ungroup()
 
-s2_plot <- ggplot(em_means_s2_df, aes(x = fricative, y = emmean, color = emphasis)) +
+s2 <- ggplot(df_s2_summary, aes(x = fricative, y = mean_cog, color = emphasis)) +
   geom_point(position = position_dodge(width = 0.8), size = 4) +  # Points
-  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), 
+  geom_errorbar(aes(ymin = mean_cog - SE, ymax = mean_cog + SE), 
                 position = position_dodge(width = 0.8), width = 0.2) +  # Error bars
   labs(
     x = "Fricative",
     y = "",
-    title = "Speaker 2"
+    title = "Speaker 2",
+    color = "Emphasis"
   ) +
-  theme_minimal() +
-  theme(legend.position = "top",
-        axis.text.x = element_text(size = 14),
-        axis.text.y = element_blank())
+  theme_classic() +
+  theme(
+    legend.position = "top",
+    axis.text.x = element_text(size = 14),
+    axis.title.y = element_blank(),
+    coord_cartesian(ylim = y_limits) 
+  )
 
-
-final_plot <- s1_plot + s2_plot + 
+fricative_plot <- s1 + s2 +
   plot_layout(ncol = 2, guides = "collect") +  # Collects all legends into one
   plot_annotation(
-    title = "Model Adjusted Center of Gravity (COG) (Hz)", 
+    title = "COG by Fricative and Emphasis", 
     subtitle = NULL
   ) &
   theme(
     legend.position = "bottom",  # Moves the legend to the bottom of the entire plot
-    axis.title.y = element_text(size = 14),  # Ensures the y-axis title appears
-    axis.text.x = element_text(size = 14),
-    axis.text.y = element_text(size = 14)
-  ) &
-  labs(color = "Emphasis")
+    axis.title.y = element_text(size = 20),  # Ensures the y-axis title appears
+    axis.text.x = element_text(size = 20),
+    axis.text.y = element_text(size = 20),
+    plot.title = element_text(size = 20),
+    legend.title = element_text(size = 16),  # Increase the size of the legend title
+    legend.text = element_text(size = 14),   
+    legend.key.size = unit(1.5, "cm")
+  ) 
 
-
-print(final_plot)
-
-
-
-
-
+ggsave("/Users/ritalavi/Desktop/Urmi_fieldwork/figures/fricative_plot.png", 
+       plot = fricative_plot + theme(plot.margin = margin(0, 0, 0, 0)), 
+       width = 14, height = 10, dpi = 300, units = "in", 
+       bg = "transparent", device = "png")
 

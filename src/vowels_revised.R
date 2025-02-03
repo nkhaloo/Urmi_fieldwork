@@ -2,6 +2,8 @@ library(tidyverse)
 library(lme4)
 library(lmerTest)
 library(rlang)
+library(patchwork)
+
 
 #import csv's
 df_s1_raw <- read_csv("/Users/ritalavi/Desktop/Urmi_fieldwork/s1/vowels/results_praat.csv")
@@ -59,13 +61,13 @@ process_vowels <- function(df) {
 
 
 #call the function
-df_s1 <- process_vowels(df_s1_raw) %>%
+df_s1_raw <- process_vowels(df_s1_raw) %>%
   mutate(speaker = "s1")
-df_s2 <- process_vowels(df_s2_raw) %>%
+df_s2_raw <- process_vowels(df_s2_raw) %>%
   mutate(speaker = "s2")
 
 #combine the two dataframes 
-df <- rbind(df_s1, df_s2)
+df <- rbind(df_s1_raw, df_s2_raw)
 
 #add stress column from different df 
 stress <- read_csv("/Users/ritalavi/Desktop/Urmi_fieldwork/metadata/stress.csv")
@@ -170,7 +172,7 @@ df_s2 <- df_s2_filtered %>%
 #####plotting#####
 
 #plain vs emphatic 
-plot_vowel_means <- function(df) {
+plot_vowel_means <- function(df, plot_title = "Vowel Plot") {
   vowels_nm <- df %>% 
     filter(emphasis != "mixed") 
   
@@ -191,22 +193,30 @@ plot_vowel_means <- function(df) {
     scale_color_manual(values = c("plain" = "blue", "emphatic" = "red")) +
     stat_ellipse(aes(group = Segment), alpha = 0.3) +  
     theme_classic() + 
-    theme(legend.position = "right") + 
+    theme(legend.position = "right",
+          plot.margin = margin(0, 0, 0, 0),
+          plot.title = element_text(face = "bold", size = 20, hjust = 0)) +  # Left-aligned title
+    ggtitle(plot_title) +  # Add title
     xlab("Mean F2 (Hz)") + 
     ylab("Mean F1 (Hz)") + 
     coord_fixed(ratio = 10/6) +
     guides(color = guide_legend(title = "Emphasis"))
   
+  # Save the plot to the specified folder with the title as the filename
+  ggsave(filename = paste0("/Users/ritalavi/Desktop/Urmi_fieldwork/figures/", plot_title, ".png"), 
+         plot = plot, 
+         width = 8, height = 6, dpi = 300)  # You can adjust size and resolution as needed
+  
   return(plot)
 }
 
-# call the fucntion
-vowel_space_s1 <- plot_vowel_means(df_s1)
-vowel_space_s2 <- plot_vowel_means(df_s2)
+# call the function
+vowel_space_s1 <- plot_vowel_means(df_s1, "Speaker 1")
+vowel_space_s2 <- plot_vowel_means(df_s2, "Speaker 2")
 
 
-#mixed words 
-plot_mixed <- function(df) {
+#mixed words
+plot_mixed <- function(df, syllable_status_filter = NULL, plot_title = NULL) {
   # Filter vowels_nm and compute means
   vowels_nm <- df %>% 
     filter(emphasis != "mixed")
@@ -218,7 +228,7 @@ plot_mixed <- function(df) {
   
   # Filter vowels_np and compute means
   vowels_np <- df %>% 
-    filter(syllable_status == "mixed")
+    filter(syllable_status == syllable_status_filter)
   
   vowels_np_means <- vowels_np %>%
     group_by(vowel, syllable_status) %>%
@@ -228,7 +238,7 @@ plot_mixed <- function(df) {
   # Create the plot
   ggplot(vowels_nm, aes(x = F2, y = F1, color = emphasis, label = vowel)) + 
     # Vowel symbols as points with increased transparency
-    geom_text(aes(label = vowel), alpha = 0.3, size = 4) +  
+    #geom_text(aes(label = vowel), alpha = 0.3, size = 4) +  
     # Mean labels from vowels_nm_means
     geom_label(data = vowels_nm_means, 
                aes(x = mean_f2, y = mean_f1, label = vowel, color = emphasis), 
@@ -236,7 +246,7 @@ plot_mixed <- function(df) {
                fill = "white",  
                fontface = "bold") + 
     # Semi-transparent mean labels from vowels_np_means for mixed vowels
-    geom_label(data = filter(vowels_np_means, syllable_status == "mixed"), 
+    geom_label(data = filter(vowels_np_means, syllable_status == syllable_status_filter), 
                aes(x = mean_f2, y = mean_f1, label = vowel),  # No color mapping
                size = 7, 
                fill = "lightgrey",  
@@ -248,16 +258,115 @@ plot_mixed <- function(df) {
     scale_color_manual(values = c("plain" = "blue", "emphatic" = "red")) +
     stat_ellipse(aes(group = Segment), alpha = 0.3) +  
     theme_classic() + 
-    theme(legend.position = "right") + 
+    theme(legend.position = "right",
+          plot.margin = margin(0, 0, 0, 0)) + 
     xlab("Mean F2 (Hz)") + 
     ylab("Mean F1 (Hz)") + 
     coord_fixed(ratio = 10/6) +
     guides(color = guide_legend(title = "Word Status"))
+  
 }
 
-mixed_vowels_s1 <- plot_mixed(df_s1)
-mixed_vowels_s2 <- plot_mixed(df_s2)
-  
+#mixed vowels
+mixed_vowels_s1 <- plot_mixed(df_s1, "mixed")
+mixed_vowels_s2 <- plot_mixed(df_s2, "mixed")
+
+#plain mixed vowels 
+plain_mixed_vowels_s1 <- plot_mixed(df_s1, "plain_mixed")
+plain_mixed_vowels_s2 <- plot_mixed(df_s2, "plain_mixed")
+
+#combine the plots 
+s1_mixed <- plain_mixed_vowels_s1 + mixed_vowels_s1 + 
+  plot_layout(ncol = 2, guides = "collect") +  # Collects all legends into one
+  plot_annotation(
+    title = "Speaker 1", 
+    subtitle = NULL
+  ) &
+  theme(
+    legend.position = "bottom",  # Moves the legend to the bottom of the entire plot
+    axis.title.y = element_text(size = 14),  # Ensures the y-axis title appears
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14),
+    plot.title = element_text(size = 20, face = "bold")
+  )
+
+s2_mixed <- plain_mixed_vowels_s2 + mixed_vowels_s2 + 
+  plot_layout(ncol = 2, guides = "collect") +  # Collects all legends into one
+  plot_annotation(
+    title = "Speaker 2", 
+    subtitle = NULL
+  ) &
+  theme(
+    legend.position = "bottom",  # Moves the legend to the bottom of the entire plot
+    axis.title.y = element_text(size = 14),  # Ensures the y-axis title appears
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14),
+    plot.title = element_text(size = 20, face = "bold")
+  )
+
+ggsave("/Users/ritalavi/Desktop/Urmi_fieldwork/figures/s1_mixed_plot.png", 
+       plot = s1_mixed + theme(plot.margin = margin(0, 0, 0, 0)), 
+       width = 14, height = 10, dpi = 300, units = "in", 
+       bg = "transparent", device = "png")
+
+
+ggsave("/Users/ritalavi/Desktop/Urmi_fieldwork/figures/s2_mixed_plot.png", 
+       plot = s2_mixed + theme(plot.margin = margin(0, 0, 0, 0)), 
+       width = 14, height = 10, dpi = 300, units = "in", 
+       bg = "transparent", device = "png")
+
+
+
+#statistical model 
+#speaker 1
+#filter out mixed
+df_s1_nm <- df_s1 %>%
+  filter(emphasis != "mixed")
+
+#dummy code emphasis variable 
+df_s1_nm$emphasis_binary <- ifelse(df_s1_nm$emphasis == "emphatic", 1, 0)
+
+#turn vowel into a factor
+df_s1$vowel <- factor(df_s1$vowel)
+
+#scale F2/F2
+df_s1_nm$F2_scaled <- scale(df_s1_nm$F2)
+df_s1_nm$F1_scaled <- scale(df_s1_nm$F1)
+
+#model
+mod_s1 <- glmer(emphasis_binary ~ F2_scaled + F1_scaled + (1|vowel) + (1|stress), df_s1_nm, 
+               family = "binomial", 
+               control = glmerControl(optimizer = "bobyqa"))
+
+summary(mod_s1)
+
+#get 95 CI 
+confint(mod_s1, method = "Wald")
+
+#speaker 2
+#filter out mixed
+df_s2_nm <- df_s2 %>%
+  filter(emphasis != "mixed")
+
+#dummy code emphasis variable 
+df_s2_nm$emphasis_binary <- ifelse(df_s2_nm$emphasis == "emphatic", 1, 0)
+
+#turn vowel into a factor
+df_s2$vowel <- factor(df_s2$vowel)
+
+#scale F2/F2
+df_s2_nm$F2_scaled <- scale(df_s2_nm$F2)
+df_s2_nm$F1_scaled <- scale(df_s2_nm$F1)
+
+#model
+mod_s2 <- glmer(emphasis_binary ~ F2_scaled + F1_scaled + (1|vowel) + (1|stress), df_s2_nm, 
+                family = "binomial", 
+                control = glmerControl(optimizer = "bobyqa"))
+
+summary(mod_s2)
+
+#get 95 CI 
+confint(mod_s2, method = "Wald")
 
 ##### morphologically complex words ####
 #load csv's 
@@ -328,7 +437,7 @@ mc_s1 <- mc_vowels(mc_s1_raw)
 mc_s2 <- mc_vowels(mc_s2_raw)
 
 #new function for plotting mc words 
-mc_plots <- function(vowel_df, affix_df, morph_type) {
+mc_plots <- function(vowel_df, affix_df, morph_type, plot_title = NULL) {
   # Filter vowels excluding "mixed" emphasis
   vowels_nm <- vowel_df %>% 
     filter(emphasis != "mixed") 
@@ -352,8 +461,8 @@ mc_plots <- function(vowel_df, affix_df, morph_type) {
               .groups = "drop")
   
   # Generate vowel plot
-  ggplot(vowels_nm, aes(x = F2, y = F1, color = emphasis, label = vowel)) + 
-    geom_text(aes(label = vowel), alpha = 0.3, size = 4) +  
+  p <- ggplot(vowels_nm, aes(x = F2, y = F1, color = emphasis, label = vowel)) + 
+    #geom_text(aes(label = vowel), alpha = 0.3, size = 4) +  
     geom_label(data = vowels_nm_means, 
                aes(x = mean_f2, y = mean_f1, label = vowel, color = emphasis), 
                size = 5, fill = "white", fontface = "bold") + 
@@ -369,21 +478,45 @@ mc_plots <- function(vowel_df, affix_df, morph_type) {
     scale_color_manual(values = c("plain" = "blue", "emphatic" = "red")) +
     stat_ellipse(aes(group = Segment), alpha = 0.3) +  
     theme_classic() + 
-    theme(legend.position = "right") + 
+    theme( legend.position = "right",  # Keeps the legend on the right
+           legend.title = element_text(size = 16, face = "bold"),  # Increases legend title size
+           legend.text = element_text(size = 14) ) + 
     xlab("Mean F2 (Hz)") + 
     ylab("Mean F1 (Hz)") + 
     coord_fixed(ratio = 10/6) +
     guides(color = guide_legend(title = "Word Status"))
+  
+  # Add title if specified
+  if (!is.null(plot_title)) {
+    p <- p + ggtitle(plot_title) +
+      theme(plot.title = element_text(size = 16, face = "bold"))
+  }
+  return(p)  # Return the plot object explicitly
 }
 
 #suffixes
-s1_suffixes <- mc_plots(df_s1, mc_s1, "suffix")
-s2_suffixes <- mc_plots(df_s2, mc_s2, "suffix")
+s1_suffixes <- mc_plots(df_s1, mc_s1, "suffix", "Speaker 1 suffixes")
+ggsave(filename = "/Users/ritalavi/Desktop/Urmi_fieldwork/figures/s1_suffixes.png", 
+       plot = s1_suffixes, 
+       width = 8, height = 6, dpi = 300) 
+
+s2_suffixes <- mc_plots(df_s2, mc_s2, "suffix", "Speaker 2 suffixes")
+ggsave(filename = "/Users/ritalavi/Desktop/Urmi_fieldwork/figures/s2_suffixes.png", 
+       plot = s2_suffixes, 
+       width = 8, height = 6, dpi = 300) 
 
 #prefixes
-mc_s1_filtered <- mc_s1 %>% filter(vowel != "y")
-s1_prefixes <- mc_plots(df_s1, mc_s1_filtered, "prefix")
-s2_prefixes <- mc_plots(df_s2, mc_s2, "prefix")
+s1_prefixes <- mc_plots(df_s1, mc_s1, "prefix", "Speaker 1 prefixes")
+ggsave(filename = "/Users/ritalavi/Desktop/Urmi_fieldwork/figures/s1_prefixes.png", 
+       plot = s1_prefixes, 
+       width = 8, height = 6, dpi = 300) 
+
+s2_prefixes <- mc_plots(df_s2, mc_s2, "prefix", "Speaker 2 prefixes")
+ggsave(filename = "/Users/ritalavi/Desktop/Urmi_fieldwork/figures/s2_prefixes.png", 
+       plot = s2_prefixes, 
+       width = 8, height = 6, dpi = 300) 
+
+
 
 
 

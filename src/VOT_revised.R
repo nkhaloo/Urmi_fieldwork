@@ -85,8 +85,18 @@ final_plot <- voiced + voiceless +
 
 print(final_plot)
 
-#model
-model <- lmer(VOT ~ voice + emphasis + (1 | speaker) + (1| stop), data = df)
-summary(model)
+ggsave(filename = "/Users/ritalavi/Desktop/Urmi_fieldwork/figures/VOT_by_Emphasis.png", 
+       plot = final_plot, 
+       width = 8, height = 6, dpi = 300) 
 
+
+#statistical analysis
+#dummy code emphasis
+df$emphasis_binary <- ifelse(df$emphasis == "emphatic", 1, 0)
+df$voicing_binary <- ifelse(df$voice == "voiced", 1, 0)
+
+mod_1 <- glmer(emphasis_binary ~ VOT + (1|voicing_binary) + (1 | speaker) + (1| stop), 
+               data = df, family = "binomial")
+summary(mod_1)
+confint(mod_1, method = "Wald")
 
