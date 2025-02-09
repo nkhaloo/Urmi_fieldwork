@@ -90,19 +90,20 @@ result <- result %>%
 # create phonetic categories 
 result <- result %>%
   mutate(phonetic_vowel = case_when(
-    vowel == "ɑ" & emphasis == "emphatic" ~ "ɑˠ",
-    vowel == "æ" & emphasis == "emphatic" ~ "æˠ",
-    vowel == "ø" & emphasis == "emphatic" ~ "øˠ",
-    vowel == "y" & emphasis == "emphatic" ~ "yˠ",
-    vowel == "ɛ" & emphasis == "emphatic" ~ "ɛˠ",
-    vowel == "ə" & emphasis == "emphatic" ~ "əˠ",
-    vowel == "i" & emphasis == "emphatic" ~ "iˠ",
+    vowel == "ɑ" & syllable_status %in% c("emphatic", "mixed") ~ "ɑˠ",
+    vowel == "æ" & syllable_status %in% c("emphatic", "mixed")  ~ "æˠ",
+    vowel == "ø" & syllable_status %in% c("emphatic", "mixed")  ~ "øˠ",
+    vowel == "y" & syllable_status %in% c("emphatic", "mixed")  ~ "yˠ",
+    vowel == "ɛ" & syllable_status %in% c("emphatic", "mixed")  ~ "ɛˠ",
+    vowel == "ə" & syllable_status %in% c("emphatic", "mixed")  ~ "əˠ",
+    vowel == "i" & syllable_status %in% c("emphatic", "mixed")  ~ "iˠ",
     TRUE ~ vowel  
   ))
 
-#filter out na
+#filter out na 
 result <- result %>%
   filter(!is.na(vowel))
+
 
 #### mahalanobis distances #### 
 # Function to calculate Mahalanobis distance for F1, F2
@@ -333,10 +334,12 @@ df_s1$vowel <- factor(df_s1$vowel)
 df_s1_nm$F2_scaled <- scale(df_s1_nm$F2)
 df_s1_nm$F1_scaled <- scale(df_s1_nm$F1)
 
+#set ref level to /i/
+df_s1_nm$vowel <- relevel(factor(df_s1_nm$vowel), ref = "i")
+
 #model
-mod_s1 <- glmer(emphasis_binary ~ F2_scaled + F1_scaled + (1|vowel) + (1|stress), df_s1_nm, 
-               family = "binomial", 
-               control = glmerControl(optimizer = "bobyqa"))
+mod_s1 <- glm(emphasis_binary ~ F2_scaled*vowel + F1_scaled, df_s1_nm, 
+               family = "binomial")
 
 summary(mod_s1)
 
@@ -352,21 +355,33 @@ df_s2_nm <- df_s2 %>%
 df_s2_nm$emphasis_binary <- ifelse(df_s2_nm$emphasis == "emphatic", 1, 0)
 
 #turn vowel into a factor
-df_s2$vowel <- factor(df_s2$vowel)
+df_s2_nm$vowel <- relevel(factor(df_s2_nm$vowel), ref = "i")
 
 #scale F2/F2
 df_s2_nm$F2_scaled <- scale(df_s2_nm$F2)
 df_s2_nm$F1_scaled <- scale(df_s2_nm$F1)
 
+#set ref 
+df_s2_nm$vowel <- relevel(ref = "i")
+
 #model
-mod_s2 <- glmer(emphasis_binary ~ F2_scaled + F1_scaled + (1|vowel) + (1|stress), df_s2_nm, 
-                family = "binomial", 
-                control = glmerControl(optimizer = "bobyqa"))
+mod_s2 <- glm(emphasis_binary ~ F2_scaled*vowel + F1_scaled, df_s2_nm, 
+              family = "binomial")
 
 summary(mod_s2)
 
 #get 95 CI 
 confint(mod_s2, method = "Wald")
+
+#create single df for model 
+df_bs <- rbind(df_s1_nm, df_s2_nm)
+
+#model 
+mod_bs <- glmer(emphasis_binary ~ F2_scaled*vowel + F1_scaled + (1|speaker), df_bs, 
+              family = "binomial")
+
+summary(mod_bs)
+
 
 ##### morphologically complex words ####
 #load csv's 

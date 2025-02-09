@@ -155,7 +155,7 @@ s2 <- ggplot(df_s2_summary, aes(x = fricative, y = mean_cog, color = emphasis)) 
 fricative_plot <- s1 + s2 +
   plot_layout(ncol = 2, guides = "collect") +  # Collects all legends into one
   plot_annotation(
-    title = "COG by Fricative and Emphasis", 
+    title = "Center of Gravity (dB)", 
     subtitle = NULL
   ) &
   theme(
@@ -166,11 +166,13 @@ fricative_plot <- s1 + s2 +
     plot.title = element_text(size = 20),
     legend.title = element_text(size = 16),  # Increase the size of the legend title
     legend.text = element_text(size = 14),   
-    legend.key.size = unit(1.5, "cm")
+    legend.key.size = unit(1.5, "cm"),
+    aspect.ratio = 0.6
+)
   ) 
 
 ggsave("/Users/ritalavi/Desktop/Urmi_fieldwork/figures/fricative_plot.png", 
        plot = fricative_plot + theme(plot.margin = margin(0, 0, 0, 0)), 
-       width = 14, height = 10, dpi = 300, units = "in", 
+       width = 14, height = 7, dpi = 300, units = "in", 
        bg = "transparent", device = "png")
 
