@@ -4,10 +4,11 @@ library(lmerTest)
 library(rlang)
 library(patchwork)
 
+1 + 1
 
 #import csv's
-df_s1_raw <- read_csv("/Users/ritalavi/Desktop/Urmi_fieldwork/s1/vowels/results_praat.csv")
-df_s2_raw <- read_delim("/Users/ritalavi/Desktop/Urmi_fieldwork/s2/vowels/results_praat.csv")
+df_s1_raw <- read_csv("/Users/noahkhaloo/Desktop/Urmi_fieldwork/s1/vowels/results_praat.csv")
+df_s2_raw <- read_delim("/Users/noahkhaloo/Desktop/Urmi_fieldwork/s2/vowels/results_praat.csv")
 
 #create function that processes df's
 process_vowels <- function(df) {
@@ -70,7 +71,7 @@ df_s2_raw <- process_vowels(df_s2_raw) %>%
 df <- rbind(df_s1_raw, df_s2_raw)
 
 #add stress column from different df 
-stress <- read_csv("/Users/ritalavi/Desktop/Urmi_fieldwork/metadata/stress.csv")
+stress <- read_csv("/Users/noahkhaloo/Desktop/Urmi_fieldwork/metadata/stress.csv")
 
 #join them 
 # Adding row IDs to help with the join
@@ -204,9 +205,9 @@ plot_vowel_means <- function(df, plot_title = "Vowel Plot") {
     guides(color = guide_legend(title = "Emphasis"))
   
   # Save the plot to the specified folder with the title as the filename
-  ggsave(filename = paste0("/Users/ritalavi/Desktop/Urmi_fieldwork/figures/", plot_title, ".png"), 
-         plot = plot, 
-         width = 8, height = 6, dpi = 300)  # You can adjust size and resolution as needed
+  # ggsave(filename = paste0("/Users/ritalavi/Desktop/Urmi_fieldwork/figures/", plot_title, ".png"), 
+  #        plot = plot, 
+  #        width = 8, height = 6, dpi = 300)  # You can adjust size and resolution as needed
   
   return(plot)
 }
@@ -216,7 +217,70 @@ vowel_space_s1 <- plot_vowel_means(df_s1, "Speaker 1")
 vowel_space_s2 <- plot_vowel_means(df_s2, "Speaker 2")
 
 
-#mixed words
+
+#######statistical model##### 
+#speaker 1
+#filter out mixed
+df_s1_nm <- df_s1 %>%
+  filter(emphasis != "mixed")
+
+#dummy code emphasis variable 
+df_s1_nm$emphasis_binary <- ifelse(df_s1_nm$emphasis == "emphatic", 1, 0)
+
+#turn vowel into a factor
+df_s1$vowel <- factor(df_s1$vowel)
+
+#scale F2/F2
+df_s1_nm$F2_scaled <- scale(df_s1_nm$F2)
+df_s1_nm$F1_scaled <- scale(df_s1_nm$F1)
+
+#set ref level to /i/
+df_s1_nm$vowel <- relevel(factor(df_s1_nm$vowel), ref = "i")
+
+#model
+mod_s1 <- glm(emphasis_binary ~ F2_scaled*vowel + F1_scaled, df_s1_nm, 
+              family = "binomial")
+
+summary(mod_s1)
+
+#get 95 CI 
+confint(mod_s1, method = "Wald")
+
+#speaker 2
+#filter out mixed
+df_s2_nm <- df_s2 %>%
+  filter(emphasis != "mixed")
+
+#dummy code emphasis variable 
+df_s2_nm$emphasis_binary <- ifelse(df_s2_nm$emphasis == "emphatic", 1, 0)
+
+#turn vowel into a factor
+df_s2_nm$vowel <- relevel(factor(df_s2_nm$vowel), ref = "i")
+
+#scale F2/F2
+df_s2_nm$F2_scaled <- scale(df_s2_nm$F2)
+df_s2_nm$F1_scaled <- scale(df_s2_nm$F1)
+
+
+#model
+mod_s2 <- glm(emphasis_binary ~ F2_scaled*vowel + F1_scaled, df_s2_nm, 
+              family = "binomial")
+
+summary(mod_s2)
+
+#get 95 CI 
+confint(mod_s2, method = "Wald")
+
+#create single df for model 
+df_bs <- rbind(df_s1_nm, df_s2_nm)
+
+#model 
+mod_bs <- glmer(emphasis_binary ~ F2_scaled*vowel + F1_scaled + (1|speaker), df_bs, 
+                family = "binomial")
+summary(mod_bs)
+
+
+#######mixed words########
 plot_mixed <- function(df, syllable_status_filter = NULL, plot_title = NULL) {
   # Filter vowels_nm and compute means
   vowels_nm <- df %>% 
@@ -305,82 +369,18 @@ s2_mixed <- plain_mixed_vowels_s2 + mixed_vowels_s2 +
     plot.title = element_text(size = 20, face = "bold")
   )
 
-ggsave("/Users/ritalavi/Desktop/Urmi_fieldwork/figures/s1_mixed_plot.png", 
-       plot = s1_mixed + theme(plot.margin = margin(0, 0, 0, 0)), 
-       width = 14, height = 10, dpi = 300, units = "in", 
-       bg = "transparent", device = "png")
+# #ggsave("/Users/ritalavi/Desktop/Urmi_fieldwork/figures/s1_mixed_plot.png", 
+#        plot = s1_mixed + theme(plot.margin = margin(0, 0, 0, 0)), 
+#        width = 14, height = 10, dpi = 300, units = "in", 
+#        bg = "transparent", device = "png")
+# 
+# 
+# #ggsave("/Users/ritalavi/Desktop/Urmi_fieldwork/figures/s2_mixed_plot.png", 
+#        plot = s2_mixed + theme(plot.margin = margin(0, 0, 0, 0)), 
+#        width = 14, height = 10, dpi = 300, units = "in", 
+#        bg = "transparent", device = "png")
 
 
-ggsave("/Users/ritalavi/Desktop/Urmi_fieldwork/figures/s2_mixed_plot.png", 
-       plot = s2_mixed + theme(plot.margin = margin(0, 0, 0, 0)), 
-       width = 14, height = 10, dpi = 300, units = "in", 
-       bg = "transparent", device = "png")
-
-
-
-#statistical model 
-#speaker 1
-#filter out mixed
-df_s1_nm <- df_s1 %>%
-  filter(emphasis != "mixed")
-
-#dummy code emphasis variable 
-df_s1_nm$emphasis_binary <- ifelse(df_s1_nm$emphasis == "emphatic", 1, 0)
-
-#turn vowel into a factor
-df_s1$vowel <- factor(df_s1$vowel)
-
-#scale F2/F2
-df_s1_nm$F2_scaled <- scale(df_s1_nm$F2)
-df_s1_nm$F1_scaled <- scale(df_s1_nm$F1)
-
-#set ref level to /i/
-df_s1_nm$vowel <- relevel(factor(df_s1_nm$vowel), ref = "i")
-
-#model
-mod_s1 <- glm(emphasis_binary ~ F2_scaled*vowel + F1_scaled, df_s1_nm, 
-               family = "binomial")
-
-summary(mod_s1)
-
-#get 95 CI 
-confint(mod_s1, method = "Wald")
-
-#speaker 2
-#filter out mixed
-df_s2_nm <- df_s2 %>%
-  filter(emphasis != "mixed")
-
-#dummy code emphasis variable 
-df_s2_nm$emphasis_binary <- ifelse(df_s2_nm$emphasis == "emphatic", 1, 0)
-
-#turn vowel into a factor
-df_s2_nm$vowel <- relevel(factor(df_s2_nm$vowel), ref = "i")
-
-#scale F2/F2
-df_s2_nm$F2_scaled <- scale(df_s2_nm$F2)
-df_s2_nm$F1_scaled <- scale(df_s2_nm$F1)
-
-#set ref 
-df_s2_nm$vowel <- relevel(ref = "i")
-
-#model
-mod_s2 <- glm(emphasis_binary ~ F2_scaled*vowel + F1_scaled, df_s2_nm, 
-              family = "binomial")
-
-summary(mod_s2)
-
-#get 95 CI 
-confint(mod_s2, method = "Wald")
-
-#create single df for model 
-df_bs <- rbind(df_s1_nm, df_s2_nm)
-
-#model 
-mod_bs <- glmer(emphasis_binary ~ F2_scaled*vowel + F1_scaled + (1|speaker), df_bs, 
-              family = "binomial")
-
-summary(mod_bs)
 
 
 ##### morphologically complex words ####
@@ -511,23 +511,23 @@ mc_plots <- function(vowel_df, affix_df, morph_type, plot_title = NULL) {
 
 #suffixes
 s1_suffixes <- mc_plots(df_s1, mc_s1, "suffix", "Speaker 1 suffixes")
-ggsave(filename = "/Users/ritalavi/Desktop/Urmi_fieldwork/figures/s1_suffixes.png", 
+#ggsave(filename = "/Users/ritalavi/Desktop/Urmi_fieldwork/figures/s1_suffixes.png", 
        plot = s1_suffixes, 
        width = 8, height = 6, dpi = 300) 
 
 s2_suffixes <- mc_plots(df_s2, mc_s2, "suffix", "Speaker 2 suffixes")
-ggsave(filename = "/Users/ritalavi/Desktop/Urmi_fieldwork/figures/s2_suffixes.png", 
+#ggsave(filename = "/Users/ritalavi/Desktop/Urmi_fieldwork/figures/s2_suffixes.png", 
        plot = s2_suffixes, 
        width = 8, height = 6, dpi = 300) 
 
 #prefixes
 s1_prefixes <- mc_plots(df_s1, mc_s1, "prefix", "Speaker 1 prefixes")
-ggsave(filename = "/Users/ritalavi/Desktop/Urmi_fieldwork/figures/s1_prefixes.png", 
+#ggsave(filename = "/Users/ritalavi/Desktop/Urmi_fieldwork/figures/s1_prefixes.png", 
        plot = s1_prefixes, 
        width = 8, height = 6, dpi = 300) 
 
 s2_prefixes <- mc_plots(df_s2, mc_s2, "prefix", "Speaker 2 prefixes")
-ggsave(filename = "/Users/ritalavi/Desktop/Urmi_fieldwork/figures/s2_prefixes.png", 
+#ggsave(filename = "/Users/ritalavi/Desktop/Urmi_fieldwork/figures/s2_prefixes.png", 
        plot = s2_prefixes, 
        width = 8, height = 6, dpi = 300) 
 

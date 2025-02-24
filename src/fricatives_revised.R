@@ -1,14 +1,13 @@
 library(tidyverse) 
 library(lme4)
-library(emmeans)
 library(patchwork)
 library(cowplot)
 library(lmerTest)
 library(sjPlot)
 
 #load csv's 
-raw_data_s1 <- read_csv("/Users/ritalavi/Desktop/Urmi_fieldwork/s1/fricatives/results_s1.csv", col_names = FALSE)
-raw_data_s2 <- read_csv("/Users/ritalavi/Desktop/Urmi_fieldwork/s2/fricatives/results_s2.csv", col_names = FALSE)
+raw_data_s1 <- read_csv("/Users/noahkhaloo/Desktop/Urmi_fieldwork/s1/fricatives/results_s1.csv", col_names = FALSE)
+raw_data_s2 <- read_csv("/Users/noahkhaloo/Desktop/Urmi_fieldwork/s2/fricatives/results_s2.csv", col_names = FALSE)
 
 
 # Use the first row as the actual column names
@@ -122,8 +121,9 @@ s1 <- ggplot(df_s1_summary, aes(x = fricative, y = mean_cog, color = emphasis)) 
   theme(
     legend.position = "top",
     axis.text.x = element_text(size = 14),
-    coord_cartesian(ylim = y_limits) 
+    #coord_cartesian(ylim = y_limits) 
   )
+
 
 
 df_s2_summary <- df_s2 %>%
@@ -149,8 +149,9 @@ s2 <- ggplot(df_s2_summary, aes(x = fricative, y = mean_cog, color = emphasis)) 
     legend.position = "top",
     axis.text.x = element_text(size = 14),
     axis.title.y = element_blank(),
-    coord_cartesian(ylim = y_limits) 
+    #coord_cartesian(ylim = y_limits) 
   )
+
 
 fricative_plot <- s1 + s2 +
   plot_layout(ncol = 2, guides = "collect") +  # Collects all legends into one
