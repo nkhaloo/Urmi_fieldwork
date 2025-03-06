@@ -3,8 +3,9 @@ library(lme4)
 library(lmerTest)
 library(rlang)
 library(patchwork)
+library(broom)
+library(sjPlot)
 
-1 + 1
 
 #import csv's
 df_s1_raw <- read_csv("/Users/noahkhaloo/Desktop/Urmi_fieldwork/s1/vowels/results_praat.csv")
@@ -241,10 +242,9 @@ df_s1_nm$vowel <- relevel(factor(df_s1_nm$vowel), ref = "i")
 mod_s1 <- glm(emphasis_binary ~ F2_scaled*vowel + F1_scaled, df_s1_nm, 
               family = "binomial")
 
-summary(mod_s1)
+summary_s1 <- summary(mod_s1)
+conf_int_s1 <- confint(mod_s1, method = "Wald")
 
-#get 95 CI 
-confint(mod_s1, method = "Wald")
 
 #speaker 2
 #filter out mixed
