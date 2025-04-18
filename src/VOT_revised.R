@@ -5,9 +5,9 @@ library(emmeans)
 library(patchwork)
 
 #load csv's
-raw_data_s1 <- read_csv("/Users/ritalavi/Desktop/Urmi_fieldwork/s1/stops/results.csv", 
+raw_data_s1 <- read_csv("/Users/noahkhaloo/Desktop/Urmi_fieldwork/s1/stops/results.csv", 
                         locale = locale(encoding = "UTF-16"))
-raw_data_s2 <- read_csv("/Users/ritalavi/Desktop/Urmi_fieldwork/s2/stops/results.csv",
+raw_data_s2 <- read_csv("/Users/noahkhaloo/Desktop/Urmi_fieldwork/s2/stops/results.csv",
                          locale = locale(encoding = "UTF-16"))
 
 #make function to process data 
@@ -24,8 +24,9 @@ process_VOT <- function(df, speaker_value = "s1") {
       voice = case_when(
         stop %in% c("b", "d", "g", "d͡ʒ") ~ "voiced",  # Voiced stops
         TRUE ~ "voiceless"                           # All other stops
-      )
-    )
+      ),
+      VOT = VOT * 1000
+    ) 
 }
 
 
@@ -41,8 +42,6 @@ df <- df %>%
   filter(VOT >= -2)
 
 #plot VOT 
-# Calculate the range of the VOT values for both plots
-y_limits <- c(min(df$VOT, na.rm = TRUE), max(df$VOT, na.rm = TRUE))
 
 # Voiced plot
 voiced <- ggplot(df %>% filter(stop %in% c("b", "d", "g", "d͡ʒ")), 
@@ -54,7 +53,7 @@ voiced <- ggplot(df %>% filter(stop %in% c("b", "d", "g", "d͡ʒ")),
   labs(x = "Stop", y = "Mean VOT (ms)", title = "Voiced Stops") +
   theme_minimal() +
   theme(axis.text.x = element_text(size = 14)) +
-  coord_cartesian(ylim = y_limits)  # Set the same y-axis limits
+  coord_cartesian(ylim = c(0, 200)) 
 
 # Voiceless plot
 voiceless <- ggplot(df %>% filter(stop %in% c("p", "t", "k", "q", "t͡ʃ")), 
@@ -67,25 +66,23 @@ voiceless <- ggplot(df %>% filter(stop %in% c("p", "t", "k", "q", "t͡ʃ")),
   theme_minimal() +
   theme(axis.text.x = element_text(size = 14),
         axis.text.y = element_blank()) +
-  coord_cartesian(ylim = y_limits)  # Set the same y-axis limits
+  coord_cartesian(ylim = c(0, 200))  # Set the same y-axis limits
 
 # Combine the plots
+# Combine the plots without legend title
 final_plot <- voiced + voiceless + 
-  plot_layout(ncol = 2, guides = "collect") +  # Collects all legends into one
-  plot_annotation(
-    title = "VOT(Ms) by Emphasis", 
-    subtitle = NULL
-  ) &
+  plot_layout(ncol = 2, guides = "collect") +  
+  plot_annotation(title = NULL, subtitle = NULL) &
   theme(
-    legend.position = "bottom",  # Moves the legend to the bottom of the entire plot
-    axis.title.y = element_text(size = 14),  # Ensures the y-axis title appears
-    axis.text.x = element_text(size = 14),
-    axis.text.y = element_text(size = 14)
-  )
+    legend.position = "bottom",
+    legend.text = element_text(size = 12)
+  ) &
+  guides(fill = guide_legend(title = NULL))  
+
 
 print(final_plot)
 
-ggsave(filename = "/Users/ritalavi/Desktop/Urmi_fieldwork/figures/VOT_by_Emphasis.png", 
+ggsave(filename = "/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/VOT_by_Emphasis.png", 
        plot = final_plot, 
        width = 8, height = 6, dpi = 300) 
 
@@ -95,8 +92,9 @@ ggsave(filename = "/Users/ritalavi/Desktop/Urmi_fieldwork/figures/VOT_by_Emphasi
 df$emphasis_binary <- ifelse(df$emphasis == "emphatic", 1, 0)
 df$voicing_binary <- ifelse(df$voice == "voiced", 1, 0)
 
-mod_1 <- glmer(emphasis_binary ~ VOT + (1|voicing_binary) + (1 | speaker) + (1| stop), 
+mod_1 <- glm(emphasis_binary ~ VOT*voicing_binary, 
                data = df, family = "binomial")
+
 summary(mod_1)
 confint(mod_1, method = "Wald")
 

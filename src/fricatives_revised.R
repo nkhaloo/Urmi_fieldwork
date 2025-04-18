@@ -107,8 +107,8 @@ df_s1_summary <- df_s1 %>%
 
 # Plot
 # Calculate y-limits from both dataframes (df_s1_summary and df_s2_summary)
-s1 <- ggplot(df_s1_summary, aes(x = fricative, y = mean_cog, color = emphasis)) +
-  geom_point(position = position_dodge(width = 0.8), size = 4) +  # Points
+s1 <- ggplot(df_s1_summary, aes(x = fricative, y = mean_cog, fill = emphasis)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7) +
   geom_errorbar(aes(ymin = mean_cog - SE, ymax = mean_cog + SE), 
                 position = position_dodge(width = 0.8), width = 0.2) +  # Error bars
   labs(
@@ -134,24 +134,23 @@ df_s2_summary <- df_s2 %>%
   ) %>%
   ungroup()
 
-s2 <- ggplot(df_s2_summary, aes(x = fricative, y = mean_cog, color = emphasis)) +
-  geom_point(position = position_dodge(width = 0.8), size = 4) +  # Points
+
+s2 <- ggplot(df_s2_summary, aes(x = fricative, y = mean_cog, fill = emphasis)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7) +
   geom_errorbar(aes(ymin = mean_cog - SE, ymax = mean_cog + SE), 
                 position = position_dodge(width = 0.8), width = 0.2) +  # Error bars
   labs(
     x = "Fricative",
-    y = "",
-    title = "Speaker 2",
+    y = "COG (dB)",
+    title = "Speaker 1",
     color = "Emphasis"
   ) +
   theme_classic() +
   theme(
     legend.position = "top",
     axis.text.x = element_text(size = 14),
-    axis.title.y = element_blank(),
     #coord_cartesian(ylim = y_limits) 
   )
-
 
 fricative_plot <- s1 + s2 +
   plot_layout(ncol = 2, guides = "collect") +  # Collects all legends into one
@@ -170,9 +169,9 @@ fricative_plot <- s1 + s2 +
     legend.key.size = unit(1.5, "cm"),
     aspect.ratio = 0.6
 )
-  ) 
+   
 
-ggsave("/Users/ritalavi/Desktop/Urmi_fieldwork/figures/fricative_plot.png", 
+ggsave("/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/fricative_plot.png", 
        plot = fricative_plot + theme(plot.margin = margin(0, 0, 0, 0)), 
        width = 14, height = 7, dpi = 300, units = "in", 
        bg = "transparent", device = "png")

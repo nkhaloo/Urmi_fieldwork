@@ -2,7 +2,10 @@ library(tuneR)
 library(rPraat)
 library(tidyverse)
 library(xgboost)    
-library(caret)   
+library(caret) 
+
+#set seed 
+set.seed(123)
 
 ### A. Define a processing function for vowels (for both MFCC & formant data)
 process_vowels <- function(df) {
@@ -151,6 +154,7 @@ combined_df <- left_join(df_formants_all, df_mfcc_all, by = "vowel")
 
 # For MFCC data
 balance_by_vowel <- function(df, vowel_col = "vowel", emphasis_col = "emphasis", groups = c("plain", "emphatic")) {
+  set.seed(123)
   df %>%
     filter((!!sym(emphasis_col)) %in% groups) %>%
     group_by(!!sym(vowel_col)) %>%
@@ -164,25 +168,31 @@ balance_by_vowel <- function(df, vowel_col = "vowel", emphasis_col = "emphasis",
     ungroup()
 }
 
-# Join df's 
-df_formants_all <- df_formants_all %>%
-  group_by(Filename, label) %>%
+# For MFCC data, filter to plain and emphatic, then create a token index per vowel/emphasis group.
+df_mfcc_common2 <- df_mfcc_all %>%
+  filter(emphasis %in% c("plain", "emphatic")) %>%
+  group_by(vowel, emphasis) %>%
   mutate(token_index = row_number()) %>%
-  ungroup() %>%
-  mutate(token_id = paste(Filename, label, token_index, sep = "_"))
+  ungroup()
 
+# For formant data, do the same:
+df_formants_common2 <- df_formants_all %>%
+  filter(emphasis %in% c("plain", "emphatic")) %>%
+  group_by(vowel, emphasis) %>%
+  mutate(token_index = row_number()) %>%
+  ungroup()
 
+# Now join the two data frames on vowel, emphasis, and token_index.
+# This will keep only tokens that appear in both (by group order).
+joined_df <- inner_join(df_formants_common2, df_mfcc_common2, 
+                        by = c("vowel", "emphasis", "token_index"),
+                        suffix = c(".formants", ".mfcc"))
 
-# MFCC balanced 
-df_balanced_mfcc <- balance_by_vowel(df_mfcc_all, vowel_col = "vowel", emphasis_col = "emphasis")
+# Check the joined result
+print(joined_df %>% count(vowel, emphasis))
 
-
-# Formant balanced
-df_balanced_formants <- balance_by_vowel(df_formants_all, vowel_col = "vowel", emphasis_col = "emphasis")
-
-
-
-
+#balance df
+df_balanced <- balance_by_vowel(joined_df, "vowel", "emphasis")
 
 ### E. XGBoost Modeling Function (Same as before)
 run_xgb <- function(df, 
@@ -200,7 +210,7 @@ run_xgb <- function(df,
     filter((!!sym(label_col)) %in% c(neg_label, pos_label)) %>%
     select(!!sym(vowel_col), !!sym(label_col), {{feature_cols}})
   
-  set.seed(seed)
+  set.seed(123)
   
   results <- list()
   vowels <- unique(df_final[[vowel_col]])
@@ -254,7 +264,7 @@ run_xgb <- function(df,
 
 ### F. Run Models
 # Model using only MFCC features (from combined speakers)
-df_final_mfcc <- df_mfcc_all %>%
+df_final_mfcc <- df_balanced %>%
   filter(emphasis %in% c("plain", "emphatic")) %>%
   select(vowel, emphasis, starts_with("MFCC_"))
 
@@ -268,11 +278,130 @@ results_mfcc_df <- run_xgb(df_final_mfcc,
 print(results_mfcc_df)
 
 # Model using only formant features (F1 and F2) from combined speakers
-results_formants_df <- run_xgb(df_formants_all,
+df_final_formants <- df_balanced %>%
+  filter(emphasis %in% c("plain", "emphatic")) %>%
+  select(vowel, emphasis, F1, F2)
+
+results_formants_df <- run_xgb(df_final_formants,
                                vowel_col = "vowel",
                                label_col = "emphasis",
                                pos_label = "emphatic",
                                neg_label = "plain",
                                feature_cols = c("F1", "F2"))
 print(results_formants_df)
+
+
+
+# Model using just F2
+df_f2 <- df_balanced %>%
+  filter(emphasis %in% c("plain", "emphatic")) %>%
+  select(vowel, emphasis, F2)
+
+
+results_f2_df <- run_xgb(df_f2,
+                               vowel_col = "vowel",
+                               label_col = "emphasis",
+                               pos_label = "emphatic",
+                               neg_label = "plain",
+                               feature_cols = c("F2"))
+
+print(results_f2_df)
+
+# Extract feature importance for MFCC model 
+# Prepare your feature matrix and label vector from your MFCC data
+X <- df_final_mfcc %>%
+  select(starts_with("MFCC_")) %>%
+  mutate(across(everything(), as.numeric)) %>%
+  as.matrix()
+y <- as.numeric(ifelse(df_final_mfcc$emphasis == "emphatic", 1, 0))
+
+# Create a DMatrix
+dtrain <- xgb.DMatrix(data = X, label = y)
+
+# Train a final model using xgb.train with the same parameters
+final_model <- xgb.train(
+  params = list(
+    objective = "binary:logistic",
+    eval_metric = "error",
+    max_depth = 3,
+    eta = 0.1,
+    verbosity = 0
+  ),
+  data = dtrain,
+  nrounds = 50
+)
+
+# Extract feature importance from the final model
+importance_matrix <- xgb.importance(feature_names = colnames(X), model = final_model)
+print(importance_matrix)
+
+# Plot the results 
+ggplot(importance_matrix, aes(x = reorder(Feature, Gain), y = Gain)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(x = "Feature", y = "Gain") +
+  theme_minimal()
+
+
+
+plot_feature_importance <- function(vowel_value = "i", 
+                                    groups = c("plain", "emphatic"), 
+                                    df, 
+                                    nrounds = 50, 
+                                    max_depth = 3, 
+                                    eta = 0.1, 
+                                    seed = 123) {
+  # Set the seed for reproducibility
+  set.seed(seed)
+  
+  # Subset the data for the given vowel and emphasis groups
+  df_subset <- df %>%
+    filter(vowel == vowel_value, emphasis %in% groups)
+  
+  # Prepare the feature matrix (assumes MFCC columns start with "MFCC_")
+  X <- df_subset %>%
+    select(starts_with("MFCC_")) %>%
+    mutate(across(everything(), as.numeric)) %>%
+    as.matrix()
+  
+  # Create the binary label vector (1 for emphatic, 0 for plain)
+  y <- as.numeric(ifelse(df_subset$emphasis == "emphatic", 1, 0))
+  
+  # Create the xgb.DMatrix
+  dtrain <- xgb.DMatrix(data = X, label = y)
+  
+  # Train a final model on the subset
+  final_model <- xgb.train(
+    params = list(
+      objective = "binary:logistic",
+      eval_metric = "error",
+      max_depth = max_depth,
+      eta = eta,
+      verbosity = 0
+    ),
+    data = dtrain,
+    nrounds = nrounds
+  )
+  
+  # Extract feature importance from the final model
+  importance_matrix <- xgb.importance(feature_names = colnames(X), model = final_model)
+  
+  # Plot the feature importance using ggplot2
+  p <- ggplot(importance_matrix, aes(x = reorder(Feature, Gain), y = Gain)) +
+    geom_col(fill = "steelblue") +
+    coord_flip() +
+    labs(x = "Feature", y = "Gain", title = vowel_value ) +
+    theme_minimal()
+  
+  print(p)
+  
+  return(importance_matrix)
+}
+
+
+importance_i <- plot_feature_importance(vowel_value = "i", df = df_final_mfcc)
+importance_y <- plot_feature_importance(vowel_value = "y", df = df_final_mfcc)
+
+
+
 
