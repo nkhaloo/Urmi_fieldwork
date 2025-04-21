@@ -107,10 +107,11 @@ df_s1_summary <- df_s1 %>%
 
 # Plot
 # Calculate y-limits from both dataframes (df_s1_summary and df_s2_summary)
+# Speaker 1 plot
 s1 <- ggplot(df_s1_summary, aes(x = fricative, y = mean_cog, fill = emphasis)) +
   geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7) +
   geom_errorbar(aes(ymin = mean_cog - SE, ymax = mean_cog + SE), 
-                position = position_dodge(width = 0.8), width = 0.2) +  # Error bars
+                position = position_dodge(width = 0.8), width = 0.2) +
   labs(
     x = "Fricative",
     y = "COG (dB)",
@@ -118,38 +119,28 @@ s1 <- ggplot(df_s1_summary, aes(x = fricative, y = mean_cog, fill = emphasis)) +
     color = "Emphasis"
   ) +
   theme_classic() +
+  scale_y_continuous(expand = c(0, 0)) +  # bars touch x-axis
   theme(
     legend.position = "top",
-    axis.text.x = element_text(size = 14),
-    #coord_cartesian(ylim = y_limits) 
+    axis.text.x = element_text(size = 14)
   )
 
-
-
-df_s2_summary <- df_s2 %>%
-  group_by(fricative, emphasis) %>%
-  summarise(
-    mean_cog = mean(cog),
-    SE = sd(cog) / sqrt(n())  # Standard Error
-  ) %>%
-  ungroup()
-
-
+# Speaker 2 summary (you already defined df_s2_summary earlier)
 s2 <- ggplot(df_s2_summary, aes(x = fricative, y = mean_cog, fill = emphasis)) +
   geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7) +
   geom_errorbar(aes(ymin = mean_cog - SE, ymax = mean_cog + SE), 
-                position = position_dodge(width = 0.8), width = 0.2) +  # Error bars
+                position = position_dodge(width = 0.8), width = 0.2) +
   labs(
     x = "Fricative",
     y = "COG (dB)",
-    title = "Speaker 1",
+    title = "Speaker 2",
     color = "Emphasis"
   ) +
   theme_classic() +
+  scale_y_continuous(expand = c(0, 0)) +  # bars touch x-axis
   theme(
     legend.position = "top",
-    axis.text.x = element_text(size = 14),
-    #coord_cartesian(ylim = y_limits) 
+    axis.text.x = element_text(size = 14)
   )
 
 fricative_plot <- s1 + s2 +

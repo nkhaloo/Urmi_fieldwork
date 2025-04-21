@@ -41,11 +41,14 @@ df <- rbind(df_s1, df_s2)
 df <- df %>%
   filter(VOT >= -2)
 
+#change names
+df <- df %>%
+  mutate(stop = str_replace_all(stop, c("d͡ʒ" = "dʒ", "t͡ʃ" = "tʃ")))
 #plot VOT 
 
 # Voiced plot
-voiced <- ggplot(df %>% filter(stop %in% c("b", "d", "g", "d͡ʒ")), 
-                 aes(x = factor(stop, levels = c("b", "d", "g", "d͡ʒ")),
+voiced <- ggplot(df %>% filter(stop %in% c("b", "d", "g", "dʒ")), 
+                 aes(x = factor(stop, levels = c("b", "d", "g", "dʒ")),
                                 y = VOT, fill = emphasis)) +
   stat_summary(fun = mean, geom = "bar", position = position_dodge(width = 0.9), alpha = 1) +
   stat_summary(fun.data = "mean_se", geom = "errorbar", 
@@ -56,8 +59,8 @@ voiced <- ggplot(df %>% filter(stop %in% c("b", "d", "g", "d͡ʒ")),
   coord_cartesian(ylim = c(0, 200)) 
 
 # Voiceless plot
-voiceless <- ggplot(df %>% filter(stop %in% c("p", "t", "k", "q", "t͡ʃ")), 
-                    aes(x = factor(stop, levels = c("p", "t", "k", "q", "t͡ʃ")), 
+voiceless <- ggplot(df %>% filter(stop %in% c("p", "t", "k", "q", "tʃ")), 
+                    aes(x = factor(stop, levels = c("p", "t", "k", "q", "tʃ")), 
                         y = VOT, fill = emphasis)) +
   stat_summary(fun = mean, geom = "bar", position = position_dodge(width = 0.9), alpha = 1) +
   stat_summary(fun.data = "mean_se", geom = "errorbar", 

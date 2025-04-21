@@ -177,8 +177,10 @@ means_s1 <- df_s1 %>%
   summarise(mean_f1 = mean(F1), 
             mean_f2 = mean(F2), .groups = "drop") %>%
   pivot_wider(names_from = emphasis, values_from = c(mean_f1, mean_f2)) %>%
-  mutate(dif = mean_f2_plain - mean_f2_emphatic)
-
+  mutate(
+    dif = mean_f2_plain - mean_f2_emphatic,
+    perc_change = (dif / mean_f2_plain) * 100
+  )
 
 means_s2 <- df_s2 %>% 
   filter(emphasis != "mixed") %>%
@@ -186,7 +188,11 @@ means_s2 <- df_s2 %>%
   summarise(mean_f1 = mean(F1), 
             mean_f2 = mean(F2), .groups = "drop") %>%
   pivot_wider(names_from = emphasis, values_from = c(mean_f1, mean_f2)) %>%
-  mutate(dif = mean_f2_plain - mean_f2_emphatic)
+  mutate(
+    dif = mean_f2_plain - mean_f2_emphatic,
+    perc_change = (dif / mean_f2_plain) * 100
+  )
+
 
 
 
@@ -260,12 +266,18 @@ df_s1_nm$F1_scaled <- scale(df_s1_nm$F1)
 df_s1_nm$vowel <- relevel(factor(df_s1_nm$vowel), ref = "i")
 
 #model
-mod_s1 <- glm(emphasis_binary ~ F2_scaled*vowel + F1_scaled, df_s1_nm, 
+mod_int_s1 <- glm(emphasis_binary ~ F2_scaled*vowel + F1_scaled, df_s1_nm, 
               family = "binomial")
 
 summary_s1 <- summary(mod_s1)
 conf_int_s1 <- confint(mod_s1, method = "Wald")
 
+mod_no_int_s1 <- glm(emphasis_binary ~ F2_scaled + F1_scaled, df_s1_nm, 
+                     family = "binomial")
+
+anova(mod_int_s1, mod_no_int_s1)
+
+BIC(mod_int_s1, mod_no_int_s1)
 
 #speaker 2
 #filter out mixed
@@ -284,13 +296,17 @@ df_s2_nm$F1_scaled <- scale(df_s2_nm$F1)
 
 
 #model
-mod_s2 <- glm(emphasis_binary ~ F2_scaled*vowel + F1_scaled, df_s2_nm, 
+mod__int_s2 <- glm(emphasis_binary ~ F2_scaled*vowel + F1_scaled, df_s2_nm, 
               family = "binomial")
 
 summary(mod_s2)
 
-#get 95 CI 
-confint(mod_s2, method = "Wald")
+mod_no_int_s2 <- glmer(emphasis_binary ~ F2_scaled + F1_scaled + (1|vowel), df_s2_nm, 
+                     family = "binomial")
+
+summary(mod_no_int_s2)
+confint(mod_no_int_s2)
+
 
 #######mixed words########
 # load separate mixed words df's 
