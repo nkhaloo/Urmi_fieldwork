@@ -96,74 +96,65 @@ summary(mod_s2)
 confint(mod_s2, method = "Wald")
 
 
-#plotting  cog
+# Summarize data including N
 df_s1_summary <- df_s1 %>%
   group_by(fricative, emphasis) %>%
-  summarise(
-    mean_cog = mean(cog),
-    SE = sd(cog) / sqrt(n())  # Standard Error
-  ) %>%
-  ungroup()
+  summarise(mean_cog = mean(cog), SE = sd(cog)/sqrt(n()), N = n(), .groups = 'drop')
 
-# Plot
-# Calculate y-limits from both dataframes (df_s1_summary and df_s2_summary)
-# Speaker 1 plot
+df_s2_summary <- df_s2 %>%
+  group_by(fricative, emphasis) %>%
+  summarise(mean_cog = mean(cog), SE = sd(cog)/sqrt(n()), N = n(), .groups = 'drop')
+# Explicit dodge width
+pd <- position_dodge(width = 0.8)
+
+# Determine max limits for y-axis
+y_max_s1 <- max(df_s1_summary$mean_cog + df_s1_summary$SE) + 600
+y_max_s2 <- max(df_s2_summary$mean_cog + df_s2_summary$SE) + 400
+
+# Speaker 1 plot (title adjusted upwards)
 s1 <- ggplot(df_s1_summary, aes(x = fricative, y = mean_cog, fill = emphasis)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7) +
-  geom_errorbar(aes(ymin = mean_cog - SE, ymax = mean_cog + SE), 
-                position = position_dodge(width = 0.8), width = 0.2) +
-  labs(
-    x = "Fricative",
-    y = "COG (dB)",
-    title = "Speaker 1",
-    color = "Emphasis"
-  ) +
+  geom_bar(stat = "identity", position = pd, width = 0.7) +
+  geom_errorbar(aes(ymin = mean_cog - SE, ymax = mean_cog + SE), position = pd, width = 0.2) +
+  geom_text(aes(label = N, y = mean_cog + SE + 300), position = pd, size = 5) +
+  labs(x = "Fricative", y = "COG (dB)", title = "Speaker 1") +
   theme_classic() +
-  scale_y_continuous(expand = c(0, 0)) +  # bars touch x-axis
-  theme(
-    legend.position = "top",
-    axis.text.x = element_text(size = 14)
-  )
+  scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, y_max_s1)) +
+  theme(axis.text.x = element_text(size = 14),
+        plot.title = element_text(size = 16, hjust = 0, margin = margin(b = 20)))
 
-# Speaker 2 summary (you already defined df_s2_summary earlier)
+# Speaker 2 plot (title adjusted upwards)
 s2 <- ggplot(df_s2_summary, aes(x = fricative, y = mean_cog, fill = emphasis)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7) +
-  geom_errorbar(aes(ymin = mean_cog - SE, ymax = mean_cog + SE), 
-                position = position_dodge(width = 0.8), width = 0.2) +
-  labs(
-    x = "Fricative",
-    y = "COG (dB)",
-    title = "Speaker 2",
-    color = "Emphasis"
-  ) +
+  geom_bar(stat = "identity", position = pd, width = 0.7) +
+  geom_errorbar(aes(ymin = mean_cog - SE, ymax = mean_cog + SE), position = pd, width = 0.2) +
+  geom_text(aes(label = N, y = mean_cog + SE + 175), position = pd, size = 5) +
+  labs(x = "Fricative", y = "COG (dB)", title = "Speaker 2") +
   theme_classic() +
-  scale_y_continuous(expand = c(0, 0)) +  # bars touch x-axis
-  theme(
-    legend.position = "top",
-    axis.text.x = element_text(size = 14)
-  )
+  scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, y_max_s2)) +
+  theme(axis.text.x = element_text(size = 14),
+        plot.title = element_text(size = 16, hjust = 0, margin = margin(b = 20)))
 
+# Combine plots
 fricative_plot <- s1 + s2 +
-  plot_layout(ncol = 2, guides = "collect") +  # Collects all legends into one
-  plot_annotation(
-    title = "Center of Gravity (dB)", 
-    subtitle = NULL
-  ) &
-  theme(
-    legend.position = "bottom",  # Moves the legend to the bottom of the entire plot
-    axis.title.y = element_text(size = 20),  # Ensures the y-axis title appears
-    axis.text.x = element_text(size = 20),
-    axis.text.y = element_text(size = 20),
-    plot.title = element_text(size = 20),
-    legend.title = element_text(size = 16),  # Increase the size of the legend title
-    legend.text = element_text(size = 14),   
-    legend.key.size = unit(1.5, "cm"),
-    aspect.ratio = 0.6
-)
-   
+  plot_layout(ncol = 2, guides = "collect") +
+  plot_annotation(title = "Center of Gravity (dB)") &
+  theme(legend.position = "bottom",
+        axis.title.y = element_text(size = 20),
+        axis.text.x = element_text(size = 20),
+        axis.text.y = element_text(size = 20),
+        plot.title = element_text(size = 20),
+        legend.title = element_text(size = 16),
+        legend.text = element_text(size = 14),
+        legend.key.size = unit(1.5, "cm"),
+        aspect.ratio = 0.6) &
+  guides(fill = guide_legend(title = NULL))
 
-ggsave("/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/fricative_plot.png", 
-       plot = fricative_plot + theme(plot.margin = margin(0, 0, 0, 0)), 
-       width = 14, height = 7, dpi = 300, units = "in", 
+# Save plot
+ggsave("/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/fricative_plot.png",
+       plot = fricative_plot + theme(plot.margin = margin(0, 0, 0, 0)),
+       width = 14, height = 7, dpi = 300, units = "in",
        bg = "transparent", device = "png")
+
+
+
+
 

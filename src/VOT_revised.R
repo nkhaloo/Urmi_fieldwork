@@ -15,14 +15,14 @@ process_VOT <- function(df, speaker_value = "s1") {
   df %>%
     mutate(
       stop = case_when(
-        grepl("^ch|^CH|^č|^Č", Word) ~ "t͡ʃ",       # Words starting with "ch", "CH", "č", or "Č"
-        grepl("^j|^J", Word) ~ "d͡ʒ",               # Words starting with "j" or "J"
+        grepl("^ch|^CH|^č|^Č", Word) ~ "tʃ",       # Words starting with "ch", "CH", "č", or "Č"
+        grepl("^j|^J", Word) ~ "dʒ",               # Words starting with "j" or "J"
         TRUE ~ tolower(substr(Word, 1, 1))          # All other cases: lowercase first letter
       ),
       emphasis = ifelse(grepl("^[A-Z]", Word), "emphatic", "plain"), # Capitalized = "emphatic"
       speaker = speaker_value,                       # Use the specified speaker value
       voice = case_when(
-        stop %in% c("b", "d", "g", "d͡ʒ") ~ "voiced",  # Voiced stops
+        stop %in% c("b", "d", "g", "dʒ") ~ "voiced",  # Voiced stops
         TRUE ~ "voiceless"                           # All other stops
       ),
       VOT = VOT * 1000
@@ -41,53 +41,63 @@ df <- rbind(df_s1, df_s2)
 df <- df %>%
   filter(VOT >= -2)
 
-#change names
-df <- df %>%
-  mutate(stop = str_replace_all(stop, c("d͡ʒ" = "dʒ", "t͡ʃ" = "tʃ")))
-#plot VOT 
+# First, summarize data to get N per category
+df_summary <- df %>%
+  group_by(stop, emphasis) %>%
+  summarise(
+    mean_VOT = mean(VOT),
+    SE = sd(VOT)/sqrt(n()),
+    N = n(),
+    .groups = 'drop'
+  )
 
-# Voiced plot
-voiced <- ggplot(df %>% filter(stop %in% c("b", "d", "g", "dʒ")), 
+# Voiced Stops plot with N labels
+voiced <- ggplot(df_summary %>% filter(stop %in% c("b", "d", "g", "dʒ")),
                  aes(x = factor(stop, levels = c("b", "d", "g", "dʒ")),
-                                y = VOT, fill = emphasis)) +
-  stat_summary(fun = mean, geom = "bar", position = position_dodge(width = 0.9), alpha = 1) +
-  stat_summary(fun.data = "mean_se", geom = "errorbar", 
-               position = position_dodge(width = 0.75), width = 0.2) +
+                     y = mean_VOT, fill = emphasis)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  geom_errorbar(aes(ymin = mean_VOT - SE, ymax = mean_VOT + SE),
+                position = position_dodge(width = 0.9), width = 0.2) +
+  geom_text(aes(y = mean_VOT + SE + 8, label = N),
+            position = position_dodge(width = 0.9), vjust = -0.5, size = 4.5) +
   labs(x = "Stop", y = "Mean VOT (ms)", title = "Voiced Stops") +
   theme_minimal() +
   theme(axis.text.x = element_text(size = 14)) +
-  coord_cartesian(ylim = c(0, 200)) 
+  coord_cartesian(ylim = c(0, 200))
 
-# Voiceless plot
-voiceless <- ggplot(df %>% filter(stop %in% c("p", "t", "k", "q", "tʃ")), 
-                    aes(x = factor(stop, levels = c("p", "t", "k", "q", "tʃ")), 
-                        y = VOT, fill = emphasis)) +
-  stat_summary(fun = mean, geom = "bar", position = position_dodge(width = 0.9), alpha = 1) +
-  stat_summary(fun.data = "mean_se", geom = "errorbar", 
-               position = position_dodge(width = 0.75), width = 0.2) +
+# Voiceless Stops plot with N labels
+voiceless <- ggplot(df_summary %>% filter(stop %in% c("p", "t", "k", "q", "tʃ")),
+                    aes(x = factor(stop, levels = c("p", "t", "k", "q", "tʃ")),
+                        y = mean_VOT, fill = emphasis)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  geom_errorbar(aes(ymin = mean_VOT - SE, ymax = mean_VOT + SE),
+                position = position_dodge(width = 0.9), width = 0.2) +
+  geom_text(aes(y = mean_VOT + SE + 8, label = N),
+            position = position_dodge(width = 0.9), vjust = -0.5, size = 4.5) +
   labs(x = "Stop", y = "", title = "Voiceless Stops") +
   theme_minimal() +
   theme(axis.text.x = element_text(size = 14),
         axis.text.y = element_blank()) +
-  coord_cartesian(ylim = c(0, 200))  # Set the same y-axis limits
+  coord_cartesian(ylim = c(0, 200))
 
-# Combine the plots
-# Combine the plots without legend title
-final_plot <- voiced + voiceless + 
-  plot_layout(ncol = 2, guides = "collect") +  
-  plot_annotation(title = NULL, subtitle = NULL) &
+# Combine plots with shared legend
+final_plot <- voiced + voiceless +
+  plot_layout(ncol = 2, guides = "collect") +
+  plot_annotation(title = NULL) &
   theme(
     legend.position = "bottom",
     legend.text = element_text(size = 12)
   ) &
-  guides(fill = guide_legend(title = NULL))  
+  guides(fill = guide_legend(title = NULL))
 
-
+# Display the plot
 print(final_plot)
 
-ggsave(filename = "/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/VOT_by_Emphasis.png", 
-       plot = final_plot, 
-       width = 8, height = 6, dpi = 300) 
+# Save the plot
+ggsave(filename = "/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/VOT_by_Emphasis.png",
+       plot = final_plot,
+       width = 8, height = 6, dpi = 300)
+
 
 
 #statistical analysis
