@@ -155,6 +155,71 @@ ggsave("/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/fricative_plot.png",
        bg = "transparent", device = "png")
 
 
+# Poster plots 
+y_max_s1 <- 12000
+
+# Define position dodge
+pd <- position_dodge(width = 0.7)
+
+# Speaker 1 plot
+s1_poster <- ggplot(df_s1_summary, aes(x = fricative, y = mean_cog, fill = emphasis)) +
+  geom_bar(stat = "identity", position = pd, width = 0.7) +
+  geom_errorbar(aes(ymin = mean_cog - SE, ymax = mean_cog + SE),
+                position = pd, width = 0.4, linewidth = 1.5) +
+  geom_text(aes(label = N, y = mean_cog + SE + 1300),
+            position = pd, size = 13, fontface = "bold") +
+  labs(x = NULL, y = NULL, title = "Speaker 1") +
+  theme_classic(base_size = 34) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, y_max_s1)) +
+  theme(
+    axis.text.x = element_text(size = 32, face = "bold"),
+    axis.text.y = element_text(size = 32, face = "bold"),
+    plot.title = element_text(size = 36, face = "bold", hjust = 0.5),
+    legend.text = element_text(size = 32, face = "bold"),
+    legend.position = "bottom",
+    legend.title = element_blank()
+  )
+
+# Speaker 2 plot
+s2_poster <- ggplot(df_s2_summary, aes(x = fricative, y = mean_cog, fill = emphasis)) +
+  geom_bar(stat = "identity", position = pd, width = 0.7) +
+  geom_errorbar(aes(ymin = mean_cog - SE, ymax = mean_cog + SE),
+                position = pd, width = 0.4, linewidth = 1.5) +
+  geom_text(aes(label = N, y = mean_cog + SE + 1300),
+            position = pd, size = 13, fontface = "bold") +
+  labs(x = NULL, y = NULL, title = "Speaker 2") +
+  theme_classic(base_size = 34) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, y_max_s1)) +
+  theme(
+    axis.text.x = element_text(size = 32, face = "bold"),
+    axis.text.y = element_text(size = 32, face = "bold"),
+    plot.title = element_text(size = 36, face = "bold", hjust = 0.5),
+    legend.text = element_text(size = 32, face = "bold"),
+    legend.position = "bottom",
+    legend.title = element_blank()
+  )
+
+# Combine vertically and collect legend
+fricative_plot_poster <- s1_poster / s2_poster +
+  plot_layout(guides = "collect") &
+  theme(
+    legend.position = "bottom",
+    legend.text = element_text(size = 30, face = "bold"),
+    legend.title = element_blank()
+  )
+
+# Add shared y-axis label
+fricative_plot_poster <- wrap_elements(fricative_plot_poster) +
+  labs(tag = "Mean COG (Hz)") + 
+  theme(
+    plot.tag = element_text(angle = 90, size = 34, face = "bold", vjust = 0.5, hjust = 0.5),
+    plot.tag.position = "left"
+  )
+
+
+ggsave(filename = "/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/fricatives_poster.png",
+       plot = fricative_plot_poster,
+       width = 20, height = 10, dpi = 300)
 
 
 

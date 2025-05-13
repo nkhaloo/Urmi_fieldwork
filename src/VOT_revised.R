@@ -100,6 +100,79 @@ ggsave(filename = "/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/VOT_by_Empha
 
 
 
+### Poster plot
+# Voiced Stops (no axis titles, bigger text)
+voiced_poster <- ggplot(df_summary %>% filter(stop %in% c("b", "d", "g", "dʒ")),
+                        aes(x = factor(stop, levels = c("b", "d", "g", "dʒ")),
+                            y = mean_VOT, fill = emphasis)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  geom_errorbar(aes(ymin = mean_VOT - SE, ymax = mean_VOT + SE),
+                position = position_dodge(width = 0.9), width = 0.4, linewidth = 1.5) +
+  geom_text(aes(y = mean_VOT + SE + 8, label = N),
+            position = position_dodge(width = 0.9), vjust = -0.5, size = 10, fontface = "bold") +
+  labs(x = NULL, y = NULL, title = "Voiced Stops") +
+  theme_classic(base_size = 28) +
+  theme(
+    axis.text = element_text(size = 28, face = "bold"),
+    plot.title = element_text(size = 30, face = "bold", hjust = 0.5),
+    legend.position = "bottom",
+    legend.text = element_text(size = 28, face = "bold"),
+    plot.margin = margin(10, 40, 10, 40)
+  ) +
+  coord_cartesian(ylim = c(0, 230), expand = FALSE) +
+  guides(fill = guide_legend(title = NULL))
+
+# Voiceless Stops (no axis titles, bigger text)
+voiceless_poster <- ggplot(df_summary %>% filter(stop %in% c("p", "t", "k", "q", "tʃ")),
+                           aes(x = factor(stop, levels = c("p", "t", "k", "q", "tʃ")),
+                               y = mean_VOT, fill = emphasis)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  geom_errorbar(aes(ymin = mean_VOT - SE, ymax = mean_VOT + SE),
+                position = position_dodge(width = 0.9), width = 0.4, linewidth = 1.5) +
+  geom_text(aes(y = mean_VOT + SE + 8, label = N),
+            position = position_dodge(width = 0.9), vjust = -0.5, size = 10, fontface = "bold") +
+  labs(x = NULL, y = NULL, title = "Voiceless Stops") +
+  theme_classic(base_size = 28) +
+  theme(
+    axis.text.x = element_text(size = 28, face = "bold"),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    plot.title = element_text(size = 30, face = "bold", hjust = 0.5),
+    legend.position = "bottom",
+    legend.text = element_text(size = 28, face = "bold"),
+    plot.margin = margin(10, 40, 10, 40)
+  ) +
+  coord_cartesian(ylim = c(0, 230), expand = FALSE) +
+  guides(fill = guide_legend(title = NULL))
+
+# Combine plots vertically, compressed vertically
+final_plot_poster <- (voiced_poster / voiceless_poster) +
+  plot_layout(guides = "collect", heights = c(1, 1)) +
+  plot_annotation(
+    theme = theme(
+      legend.position = "bottom",
+      legend.text = element_text(size = 28, face = "bold"),
+      plot.margin = margin(10,10,10,10)
+    )
+  )
+
+# Add shared y-axis title
+final_plot_poster <- wrap_elements(final_plot_poster) +
+  labs(tag = "Mean VOT (ms)") + 
+  theme(
+    plot.tag = element_text(angle = 90, size = 30, face = "bold", vjust = 0.5, hjust = 0.5),
+    plot.tag.position = "left"
+  )
+
+# Display final combined plot
+print(final_plot_poster)
+
+# Save final adjusted plot clearly wider and shorter
+ggsave(filename = "/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/VOT_combined_poster.png",
+       plot = final_plot_poster,
+       width = 15, height = 10, dpi = 300)
+
+
 #statistical analysis
 #dummy code emphasis
 df$emphasis_binary <- ifelse(df$emphasis == "emphatic", 1, 0)

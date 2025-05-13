@@ -246,6 +246,56 @@ ggsave(filename = "/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/vowels_s2.pn
 
 
 
+#####poster plot 
+plot_vowel_means_wide <- function(df, show_legend = TRUE) {
+  vowels_nm <- df %>% 
+    filter(emphasis != "mixed") 
+  
+  vowels_nm_means <- vowels_nm %>%
+    group_by(vowel, emphasis) %>%
+    summarise(mean_f1 = mean(F1), 
+              mean_f2 = mean(F2), .groups = 'drop')
+  
+  plot <- ggplot(vowels_nm, aes(x = F2, y = F1, color = emphasis, label = vowel)) + 
+    geom_text(aes(label = vowel), alpha = 0.4, size = 10) +  
+    geom_label(data = vowels_nm_means, 
+               aes(x = mean_f2, y = mean_f1, label = vowel, color = emphasis), 
+               size = 24, fill = "white", fontface = "bold", label.padding = unit(0.1, "lines")) + 
+    scale_x_reverse(limits = c(max(vowels_nm$F2) + 100, min(vowels_nm$F2) - 100)) + 
+    scale_y_reverse() + 
+    scale_color_manual(values = c("plain" = "blue", "emphatic" = "red")) +
+    stat_ellipse(aes(group = Segment), level = 0.65, alpha = 0.7, linewidth = 1.8) +
+    theme_classic() +
+    theme(
+      legend.position = if (show_legend) "top" else "none",
+      legend.text = element_text(size = 38, face = "bold"),
+      legend.key.size = unit(3, "lines"),
+      axis.text = element_text(size = 55, face = "bold"),
+      axis.title = element_text(size = 57, face = "bold"),
+      plot.margin = margin(10, 10, 10, 10)
+    ) +
+    xlab("Mean F2 (Hz)") + 
+    ylab("Mean F1 (Hz)") + 
+    guides(color = guide_legend(title = NULL))
+  
+  return(plot)
+}
+
+
+# Speaker 1: Legend inside plot (top-left area)
+vowel_space_s1 <- plot_vowel_means_wide(df_s1, show_legend = TRUE)
+vowel_space_s1 <- vowel_space_s1 + theme(legend.position = "top")
+ggsave(filename = "/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/poster_vowels_s1.png",
+       plot = vowel_space_s1,
+       width = 20, height = 10, dpi = 300)
+
+# Speaker 2: No legend
+vowel_space_s2 <- plot_vowel_means_wide(df_s2, show_legend = FALSE)
+ggsave(filename = "/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/poster_vowels_s2.png",
+       plot = vowel_space_s2,
+       width = 20, height = 10, dpi = 300)
+
+
 #######statistical model##### 
 #speaker 1
 #filter out mixed
