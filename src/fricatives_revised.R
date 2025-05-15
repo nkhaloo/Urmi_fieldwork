@@ -119,6 +119,7 @@ s1 <- ggplot(df_s1_summary, aes(x = fricative, y = mean_cog, fill = emphasis)) +
   labs(x = "Fricative", y = "COG (dB)", title = "Speaker 1") +
   theme_classic() +
   scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, y_max_s1)) +
+  scale_fill_manual(values = c("plain" = "blue", "emphatic" = "red")) + 
   theme(axis.text.x = element_text(size = 14),
         plot.title = element_text(size = 16, hjust = 0, margin = margin(b = 20)))
 
@@ -128,6 +129,7 @@ s2 <- ggplot(df_s2_summary, aes(x = fricative, y = mean_cog, fill = emphasis)) +
   geom_errorbar(aes(ymin = mean_cog - SE, ymax = mean_cog + SE), position = pd, width = 0.2) +
   geom_text(aes(label = N, y = mean_cog + SE + 175), position = pd, size = 5) +
   labs(x = "Fricative", y = "COG (dB)", title = "Speaker 2") +
+  scale_fill_manual(values = c("plain" = "blue", "emphatic" = "red")) + 
   theme_classic() +
   scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, y_max_s2)) +
   theme(axis.text.x = element_text(size = 14),
@@ -171,11 +173,12 @@ s1_poster <- ggplot(df_s1_summary, aes(x = fricative, y = mean_cog, fill = empha
   labs(x = NULL, y = NULL, title = "Speaker 1") +
   theme_classic(base_size = 34) +
   scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, y_max_s1)) +
+  scale_fill_manual(values = c("plain" = "blue", "emphatic" = "red")) + 
   theme(
-    axis.text.x = element_text(size = 32, face = "bold"),
-    axis.text.y = element_text(size = 32, face = "bold"),
-    plot.title = element_text(size = 36, face = "bold", hjust = 0.5),
-    legend.text = element_text(size = 32, face = "bold"),
+    axis.text.x = element_text(size = 55, face = "bold"),
+    axis.text.y = element_text(size = 45, face = "bold"),
+    plot.title = element_text(size = 55, face = "bold", hjust = 0.5),
+    legend.text = element_text(size = 38, face = "bold"),
     legend.position = "bottom",
     legend.title = element_blank()
   )
@@ -190,11 +193,12 @@ s2_poster <- ggplot(df_s2_summary, aes(x = fricative, y = mean_cog, fill = empha
   labs(x = NULL, y = NULL, title = "Speaker 2") +
   theme_classic(base_size = 34) +
   scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, y_max_s1)) +
+  scale_fill_manual(values = c("plain" = "blue", "emphatic" = "red")) + 
   theme(
-    axis.text.x = element_text(size = 32, face = "bold"),
-    axis.text.y = element_text(size = 32, face = "bold"),
-    plot.title = element_text(size = 36, face = "bold", hjust = 0.5),
-    legend.text = element_text(size = 32, face = "bold"),
+    axis.text.x = element_text(size = 55, face = "bold"),
+    axis.text.y = element_text(size = 45, face = "bold"),
+    plot.title = element_text(size = 55, face = "bold", hjust = 0.5),
+    legend.text = element_text(size = 38, face = "bold"),
     legend.position = "bottom",
     legend.title = element_blank()
   )
@@ -204,7 +208,7 @@ fricative_plot_poster <- s1_poster / s2_poster +
   plot_layout(guides = "collect") &
   theme(
     legend.position = "bottom",
-    legend.text = element_text(size = 30, face = "bold"),
+    legend.text = element_text(size = 45, face = "bold"),
     legend.title = element_blank()
   )
 
@@ -212,7 +216,7 @@ fricative_plot_poster <- s1_poster / s2_poster +
 fricative_plot_poster <- wrap_elements(fricative_plot_poster) +
   labs(tag = "Mean COG (Hz)") + 
   theme(
-    plot.tag = element_text(angle = 90, size = 34, face = "bold", vjust = 0.5, hjust = 0.5),
+    plot.tag = element_text(angle = 90, size = 55, face = "bold", vjust = 0.5, hjust = 0.5),
     plot.tag.position = "left"
   )
 

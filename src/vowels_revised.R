@@ -269,7 +269,7 @@ plot_vowel_means_wide <- function(df, show_legend = TRUE) {
     theme(
       legend.position = if (show_legend) "top" else "none",
       legend.text = element_text(size = 38, face = "bold"),
-      legend.key.size = unit(3, "lines"),
+      legend.key.size = unit(0.01, "cm"),
       axis.text = element_text(size = 55, face = "bold"),
       axis.title = element_text(size = 57, face = "bold"),
       plot.margin = margin(10, 10, 10, 10)
@@ -319,7 +319,7 @@ df_s1_nm$vowel <- relevel(factor(df_s1_nm$vowel), ref = "i")
 mod_int_s1 <- glm(emphasis_binary ~ F2_scaled*vowel + F1_scaled, df_s1_nm, 
               family = "binomial")
 
-summary_s1 <- summary(mod_s1)
+summary_s1 <- summary(mod_int_s1)
 conf_int_s1 <- confint(mod_s1, method = "Wald")
 
 mod_no_int_s1 <- glm(emphasis_binary ~ F2_scaled + F1_scaled, df_s1_nm, 

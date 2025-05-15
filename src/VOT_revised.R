@@ -62,7 +62,9 @@ voiced <- ggplot(df_summary %>% filter(stop %in% c("b", "d", "g", "dʒ")),
             position = position_dodge(width = 0.9), vjust = -0.5, size = 4.5) +
   labs(x = "Stop", y = "Mean VOT (ms)", title = "Voiced Stops") +
   theme_minimal() +
-  theme(axis.text.x = element_text(size = 14)) +
+  theme(axis.text.x = element_text(size = 14),
+        panel.grid = element_blank()) +
+  scale_fill_manual(values = c("plain" = "blue", "emphatic" = "red")) + 
   coord_cartesian(ylim = c(0, 200))
 
 # Voiceless Stops plot with N labels
@@ -77,8 +79,10 @@ voiceless <- ggplot(df_summary %>% filter(stop %in% c("p", "t", "k", "q", "tʃ")
   labs(x = "Stop", y = "", title = "Voiceless Stops") +
   theme_minimal() +
   theme(axis.text.x = element_text(size = 14),
+        panel.grid = element_blank(),
         axis.text.y = element_blank()) +
-  coord_cartesian(ylim = c(0, 200))
+  scale_fill_manual(values = c("plain" = "blue", "emphatic" = "red")) + 
+  coord_cartesian(ylim = c(0, 200)) 
 
 # Combine plots with shared legend
 final_plot <- voiced + voiceless +
@@ -113,13 +117,14 @@ voiced_poster <- ggplot(df_summary %>% filter(stop %in% c("b", "d", "g", "dʒ"))
   labs(x = NULL, y = NULL, title = "Voiced Stops") +
   theme_classic(base_size = 28) +
   theme(
-    axis.text = element_text(size = 28, face = "bold"),
-    plot.title = element_text(size = 30, face = "bold", hjust = 0.5),
+    axis.text = element_text(size = 45, face = "bold"),
+    plot.title = element_text(size = 55, face = "bold", hjust = 0.5),
     legend.position = "bottom",
-    legend.text = element_text(size = 28, face = "bold"),
+    legend.text = element_text(size = 45, face = "bold"),
     plot.margin = margin(10, 40, 10, 40)
   ) +
   coord_cartesian(ylim = c(0, 230), expand = FALSE) +
+  scale_fill_manual(values = c("plain" = "blue", "emphatic" = "red")) + 
   guides(fill = guide_legend(title = NULL))
 
 # Voiceless Stops (no axis titles, bigger text)
@@ -134,15 +139,15 @@ voiceless_poster <- ggplot(df_summary %>% filter(stop %in% c("p", "t", "k", "q",
   labs(x = NULL, y = NULL, title = "Voiceless Stops") +
   theme_classic(base_size = 28) +
   theme(
-    axis.text.x = element_text(size = 28, face = "bold"),
-    axis.text.y = element_blank(),
+    axis.text = element_text(size = 45, face = "bold"),
     axis.ticks.y = element_blank(),
-    plot.title = element_text(size = 30, face = "bold", hjust = 0.5),
+    plot.title = element_text(size = 55, face = "bold", hjust = 0.5),
     legend.position = "bottom",
-    legend.text = element_text(size = 28, face = "bold"),
+    legend.text = element_text(size = 45, face = "bold"),
     plot.margin = margin(10, 40, 10, 40)
   ) +
   coord_cartesian(ylim = c(0, 230), expand = FALSE) +
+  scale_fill_manual(values = c("plain" = "blue", "emphatic" = "red")) + 
   guides(fill = guide_legend(title = NULL))
 
 # Combine plots vertically, compressed vertically
@@ -151,7 +156,7 @@ final_plot_poster <- (voiced_poster / voiceless_poster) +
   plot_annotation(
     theme = theme(
       legend.position = "bottom",
-      legend.text = element_text(size = 28, face = "bold"),
+      legend.text = element_text(size = 45, face = "bold"),
       plot.margin = margin(10,10,10,10)
     )
   )
@@ -160,7 +165,7 @@ final_plot_poster <- (voiced_poster / voiceless_poster) +
 final_plot_poster <- wrap_elements(final_plot_poster) +
   labs(tag = "Mean VOT (ms)") + 
   theme(
-    plot.tag = element_text(angle = 90, size = 30, face = "bold", vjust = 0.5, hjust = 0.5),
+    plot.tag = element_text(angle = 90, size = 55, face = "bold", vjust = 0.5, hjust = 0.5),
     plot.tag.position = "left"
   )
 
@@ -170,7 +175,7 @@ print(final_plot_poster)
 # Save final adjusted plot clearly wider and shorter
 ggsave(filename = "/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/VOT_combined_poster.png",
        plot = final_plot_poster,
-       width = 15, height = 10, dpi = 300)
+       width = 20, height = 10, dpi = 300)
 
 
 #statistical analysis
