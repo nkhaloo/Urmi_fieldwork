@@ -113,7 +113,7 @@ y_max_s2 <- max(df_s2_summary$mean_cog + df_s2_summary$SE) + 400
 
 # Speaker 1 plot (title adjusted upwards)
 s1 <- ggplot(df_s1_summary, aes(x = fricative, y = mean_cog, fill = emphasis)) +
-  geom_bar(stat = "identity", position = pd, width = 0.7) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
   geom_errorbar(aes(ymin = mean_cog - SE, ymax = mean_cog + SE), position = pd, width = 0.2) +
   geom_text(aes(label = N, y = mean_cog + SE + 300), position = pd, size = 5) +
   labs(x = "Fricative", y = "COG (dB)", title = "Speaker 1") +
@@ -125,7 +125,7 @@ s1 <- ggplot(df_s1_summary, aes(x = fricative, y = mean_cog, fill = emphasis)) +
 
 # Speaker 2 plot (title adjusted upwards)
 s2 <- ggplot(df_s2_summary, aes(x = fricative, y = mean_cog, fill = emphasis)) +
-  geom_bar(stat = "identity", position = pd, width = 0.7) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
   geom_errorbar(aes(ymin = mean_cog - SE, ymax = mean_cog + SE), position = pd, width = 0.2) +
   geom_text(aes(label = N, y = mean_cog + SE + 175), position = pd, size = 5) +
   labs(x = "Fricative", y = "COG (dB)", title = "Speaker 2") +
@@ -138,7 +138,7 @@ s2 <- ggplot(df_s2_summary, aes(x = fricative, y = mean_cog, fill = emphasis)) +
 # Combine plots
 fricative_plot <- s1 + s2 +
   plot_layout(ncol = 2, guides = "collect") +
-  plot_annotation(title = "Center of Gravity (dB)") &
+  plot_annotation(title = NULL) &
   theme(legend.position = "bottom",
         axis.title.y = element_text(size = 20),
         axis.text.x = element_text(size = 20),

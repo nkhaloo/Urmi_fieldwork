@@ -62,8 +62,11 @@ voiced <- ggplot(df_summary %>% filter(stop %in% c("b", "d", "g", "dʒ")),
             position = position_dodge(width = 0.9), vjust = -0.5, size = 4.5) +
   labs(x = "Stop", y = "Mean VOT (ms)", title = "Voiced Stops") +
   theme_minimal() +
+  scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, y_max_s1)) +
   theme(axis.text.x = element_text(size = 14),
-        panel.grid = element_blank()) +
+        panel.grid = element_blank(),
+        axis.line = element_line(),
+        aspect.ratio = 0.5) +
   scale_fill_manual(values = c("plain" = "blue", "emphatic" = "red")) + 
   coord_cartesian(ylim = c(0, 200))
 
@@ -78,9 +81,12 @@ voiceless <- ggplot(df_summary %>% filter(stop %in% c("p", "t", "k", "q", "tʃ")
             position = position_dodge(width = 0.9), vjust = -0.5, size = 4.5) +
   labs(x = "Stop", y = "", title = "Voiceless Stops") +
   theme_minimal() +
+  scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, y_max_s1)) +
   theme(axis.text.x = element_text(size = 14),
         panel.grid = element_blank(),
-        axis.text.y = element_blank()) +
+        axis.text.y = element_blank(),
+        axis.line = element_line(),
+        aspect.ratio = 0.5) +
   scale_fill_manual(values = c("plain" = "blue", "emphatic" = "red")) + 
   coord_cartesian(ylim = c(0, 200)) 
 
