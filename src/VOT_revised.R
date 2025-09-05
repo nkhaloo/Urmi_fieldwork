@@ -88,7 +88,7 @@ voiceless <- ggplot(df_summary %>% filter(stop %in% c("p", "t", "k", "q", "tʃ")
         axis.line = element_line(),
         aspect.ratio = 0.5) +
   scale_fill_manual(values = c("plain" = "blue", "emphatic" = "red")) + 
-  coord_cartesian(ylim = c(0, 200)) 
+  coord_cartesian(ylim = c(0, 250)) 
 
 # Combine plots with shared legend
 final_plot <- voiced + voiceless +
