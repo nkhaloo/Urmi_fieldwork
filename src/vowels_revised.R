@@ -201,35 +201,51 @@ means_s2 <- df_s2 %>%
 
 #plain vs emphatic 
 plot_vowel_means <- function(df) {
-  vowels_nm <- df %>% 
-    filter(emphasis != "mixed") 
+  vowels_nm <- df %>% filter(emphasis != "mixed")
   
   vowels_nm_means <- vowels_nm %>%
     group_by(vowel, emphasis) %>%
-    summarise(mean_f1 = mean(F1), 
-              mean_f2 = mean(F2))
+    summarise(mean_f1 = mean(F1), mean_f2 = mean(F2), .groups = "drop")
   
-  plot <- ggplot(vowels_nm, aes(x = F2, y = F1, color = emphasis, label = vowel)) + 
-    geom_text(aes(label = vowel), alpha = 0.3, size = 4) + 
-    geom_label(data = vowels_nm_means, 
-               aes(x = mean_f2, y = mean_f1, label = vowel, color = emphasis), 
-               size = 5, 
-               fill = "white",  
-               fontface = "bold") + 
-    scale_x_reverse() + 
-    scale_y_reverse() + 
-    scale_color_manual(values = c("plain" = "blue", "emphatic" = "red")) +
-    stat_ellipse(aes(group = Segment), level = 0.65, alpha = 0.5) +  
-    theme_classic() + 
-    theme(legend.position = "right",
-          plot.margin = margin(0, 0, 0, 0)) + 
-    xlab("Mean F2 (Hz)") + 
-    ylab("Mean F1 (Hz)") + 
+  ggplot(vowels_nm, aes(F2, F1, linetype = emphasis)) +
+    # ✅ tokens as labeled phonemes, colored by emphasis (no dots)
+    geom_text(aes(label = vowel, color = emphasis), alpha = 0.55, size = 4) +
+    
+    # mean points & labels (colored by emphasis)
+    geom_point(
+      data = vowels_nm_means,
+      aes(mean_f2, mean_f1, color = emphasis),
+      size = 3
+    ) +
+    geom_label(
+      data = vowels_nm_means,
+      aes(mean_f2, mean_f1, label = vowel, color = emphasis),
+      size = 5, fill = "white", fontface = "bold"
+    ) +
+    
+    scale_x_reverse() + scale_y_reverse() +
+    scale_linetype_manual(values = c(plain = "solid", emphatic = "22")) +
+    
+    # ellipses colored by emphasis; alpha unchanged
+    stat_ellipse(
+      aes(group = Segment, color = emphasis, linetype = emphasis),
+      level = 0.65, alpha = 0.8, size = 1.2
+    ) +
+    
+    # plain = black, emphatic = grey (applies to token text, means, ellipses)
+    scale_color_manual(values = c(plain = "black", emphatic = "grey40")) +
+    
+    theme_classic() +
+    theme(legend.position = "right", plot.margin = margin(0, 0, 0, 0)) +
+    xlab("Mean F2 (Hz)") + ylab("Mean F1 (Hz)") +
     coord_fixed(ratio = 10/6) +
-    guides(color = guide_legend(title = NULL))
-
-  return(plot)
+    guides(linetype = guide_legend(title = NULL), color = "none")
 }
+
+
+
+
+
 
 # call the function
 vowel_space_s1 <- plot_vowel_means(df_s1)
@@ -435,36 +451,54 @@ plot_mixed <- function(df, syllable_status_filter = NULL, plot_title = NULL) {
               mean_f2 = mean(F2))
   
   # Create the plot
-  ggplot(vowels_nm, aes(x = F2, y = F1, color = emphasis, label = vowel)) + 
-    # Vowel symbols as points with increased transparency
-    #geom_text(aes(label = vowel), alpha = 0.3, size = 4) +  
-    # Mean labels from vowels_nm_means
+  ggplot(vowels_nm, aes(x = F2, y = F1, linetype = emphasis, label = vowel)) + 
+    # mean points (black or grey depending on emphasis)
+    geom_point(data = vowels_nm_means, 
+               aes(x = mean_f2, y = mean_f1, color = emphasis), 
+               size = 3, inherit.aes = FALSE) +
+    
+    # mean labels (also mapped to emphasis for black/grey)
     geom_label(data = vowels_nm_means, 
                aes(x = mean_f2, y = mean_f1, label = vowel, color = emphasis), 
                size = 5, 
                fill = "white",  
-               fontface = "bold") + 
-    # Semi-transparent mean labels from vowels_np_means for mixed vowels
+               fontface = "bold",
+               inherit.aes = FALSE) + 
+    
+    # semi-transparent mixed means (light grey labels only)
     geom_label(data = filter(vowels_np_means, syllable_status == syllable_status_filter), 
-               aes(x = mean_f2, y = mean_f1, label = vowel),  # No color mapping
-               size = 7, 
-               fill = "lightgrey",  
+               aes(x = mean_f2, y = mean_f1, label = vowel),  
+               size = 10, 
+               fill = "white",  
                fontface = "bold",
                alpha = 0.5, 
-               color = "black") +  # Fixed color for mixed vowel labels
+               color = "black",
+               inherit.aes = FALSE) +  
+    
     scale_x_reverse() + 
     scale_y_reverse() + 
-    scale_color_manual(values = c("plain" = "blue", "emphatic" = "red")) +
-    stat_ellipse(aes(group = Segment), level = 0.65, alpha = 0.5) +  
+    
+    # emphasis line types: plain solid, emphatic dotted
+    scale_linetype_manual(values = c("plain" = "solid", "emphatic" = "22")) +
+    
+    # ellipses styled by emphasis
+    stat_ellipse(aes(group = Segment, color = emphasis, linetype = emphasis), 
+                 level = 0.65, alpha = 0.7, size = 1.2) +  
+    
+    # plain = black, emphatic = grey
+    scale_color_manual(values = c("plain" = "black", "emphatic" = "grey40")) +
+    
     theme_classic() + 
     theme(legend.position = "right",
           plot.margin = margin(0, 0, 0, 0)) + 
     xlab("Mean F2 (Hz)") + 
     ylab("Mean F1 (Hz)") + 
     coord_fixed(ratio = 10/6) +
-    guides(color = guide_legend(title = NULL))
-  
+    guides(linetype = guide_legend(title = NULL),
+           color = "none")  # hide color legend
 }
+
+
 
 #mixed vowels
 mixed_vowels_s1 <- plot_mixed(df_s1_mixed, "mixed")
@@ -611,102 +645,113 @@ summary_s2 <- mc_s2 %>%
 
 
 #new function for plotting mc words 
-mc_plots <- function(vowel_df, affix_df, morph_type, plot_title = NULL) {
+mc_plots <- function(vowel_df, affix_df, morph_type, plot_title = NULL, ylim = NULL) {
   # Filter vowels excluding "mixed" emphasis
   vowels_nm <- vowel_df %>% 
-    filter(emphasis != "mixed") 
+    filter(emphasis != "mixed")
   
-  # Compute mean F1 and F2 values
+  # Compute mean F1 and F2 values for vowel_df
   vowels_nm_means <- vowels_nm %>%
     group_by(vowel, emphasis) %>%
     summarise(mean_f1 = mean(F1), 
-              mean_f2 = mean(F2), 
+              mean_f2 = mean(F2),
               .groups = "drop")
   
-  # Filter for specified morph_type in affix_df
-  mc <- affix_df %>%
+  # Filter affix_df for the selected morph_type (prefix/suffix)
+  vowels_affix <- affix_df %>% 
     filter(affix == morph_type, emphasis %in% c("plain", "emphatic"))
   
-  # Compute mean F1 and F2 values for suffixes
-  suffix_means <- mc %>%
+  # Compute mean F1 and F2 values for affixes
+  vowels_affix_means <- vowels_affix %>%
     group_by(vowel, emphasis) %>%
     summarise(mean_f1 = mean(F1), 
-              mean_f2 = mean(F2), 
+              mean_f2 = mean(F2),
               .groups = "drop")
   
-  # Generate vowel plot
-  p <- ggplot(vowels_nm, aes(x = F2, y = F1, color = emphasis, label = vowel)) + 
-    #geom_text(aes(label = vowel), alpha = 0.3, size = 4) +  
+  # Create the plot
+  ggplot(vowels_nm, aes(x = F2, y = F1, linetype = emphasis, label = vowel)) + 
+    # base vowel means (points + labels)
+    geom_point(data = vowels_nm_means, 
+               aes(x = mean_f2, y = mean_f1, color = emphasis), 
+               size = 3, inherit.aes = FALSE) +
+    
     geom_label(data = vowels_nm_means, 
                aes(x = mean_f2, y = mean_f1, label = vowel, color = emphasis), 
-               size = 5, fill = "white", fontface = "bold") + 
-    geom_label(data = filter(suffix_means, emphasis == emphasis), 
+               size = 5, 
+               fill = "white",  
+               fontface = "bold",
+               inherit.aes = FALSE) + 
+    
+    # affix means (bigger semi-transparent labels)
+    geom_label(data = vowels_affix_means, 
                aes(x = mean_f2, y = mean_f1, label = vowel, color = emphasis),  
-               size = 7, fontface = "bold", alpha = 0.5,
-               fill = ifelse(suffix_means$emphasis == "plain", "blue", "red"),  # Color inside the label
-               colour = "black",  # Black border
-               label.padding = unit(0.5, "lines"), 
-               label.r = unit(0.15, "lines")) +  
+               size = 15, 
+               fill = "white",  
+               fontface = "bold",
+               alpha = 0.5,
+               inherit.aes = FALSE) +  
+    
     scale_x_reverse() + 
-    scale_y_reverse(expand = expansion(mult = c(0.2, 0.05))) +
-    scale_color_manual(values = c("plain" = "blue", "emphatic" = "red")) +
-    stat_ellipse(aes(group = Segment), level = 0.65, alpha = 0.3) +  
+    
+    # reversed y-axis with optional limits
+    scale_y_reverse(limits = ylim, expand = expansion(mult = c(0, 0))) +
+    
+    # emphasis line types: plain solid, emphatic dashed
+    scale_linetype_manual(values = c("plain" = "solid", "emphatic" = "22")) +
+    
+    # black = plain, dark grey = emphatic (applies to both points + labels + legend)
+    scale_color_manual(values = c("plain" = "black", "emphatic" = "grey40")) +
+    
+    # ellipses styled by emphasis
+    stat_ellipse(aes(group = Segment, color = emphasis, linetype = emphasis), 
+                 level = 0.65, alpha = 0.7, size = 1.2) +  
+    
     theme_classic() + 
-    theme( legend.position = "right",  # Keeps the legend on the right
-           legend.title = element_text(size = 16, face = "bold"),  # Increases legend title size
-           legend.text = element_text(size = 14) ) + 
+    theme(
+      legend.position = "right",
+      legend.text = element_text(size = 20),   # bigger legend text
+      axis.text = element_text(size = 14),     # bigger axis tick labels
+      axis.title = element_text(size = 16),    # bigger axis titles
+      plot.title = element_text(size = 18, face = "bold", hjust = 0.5),
+      plot.margin = margin(10, 10, 10, 10)
+    ) + 
     xlab("Mean F2 (Hz)") + 
     ylab("Mean F1 (Hz)") + 
     coord_fixed(ratio = 10/6) +
-    guides(color = guide_legend(title = NULL))
-  # 
-  # # Add title if specified
-  # if (!is.null(plot_title)) {
-  #   p <- p + ggtitle(plot_title) +
-  #     theme(plot.title = element_text(size = 16, face = "bold"))
-  # }
-  return(p)  # Return the plot object explicitly
+    guides(
+      color = guide_legend(title = NULL, override.aes = list(size = 6)),  
+      linetype = guide_legend(title = NULL) 
+    )
 }
 
-#suffixes
-library(patchwork)
 
-# Generate individual plots (no legend on the left plot)
-s1_suffixes <- mc_plots(df_s1, mc_s1, "suffix") + theme(legend.position = "none") +
-  coord_fixed(ratio = 10/6, xlim = c(2500, 800))
-s2_suffixes <- mc_plots(df_s2, mc_s2, "suffix")
+# Suffix plots
+s1_suffixes <- mc_plots(df_s1, mc_s1, "suffix", ylim = c(850, 250))
+s2_suffixes <- mc_plots(df_s2, mc_s2, "suffix", ylim = c(750, 250))
 
-# Arrange plots side by side with a single shared legend on the right
-combined_suffixes <- s1_suffixes + s2_suffixes + 
-  plot_layout(guides = "collect") &
-  theme(
-    legend.position = "right",
-    plot.margin = unit(c(0, 0, 0, 0), "cm")  # remove margins
-  )
+ggsave(filename = "/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/s1_suffixes.png",
+       plot = s1_suffixes,
+       width = 16, height = 10, dpi = 300,
+       units = "in", bg = "transparent")
 
-# Save combined plot
-ggsave(filename = "/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/combined_suffixes.png",
-       plot = combined_suffixes,
-       width = 16, height = 6, dpi = 300,
-       units = "in",
-       bg = "transparent")
+ggsave(filename = "/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/s2_suffixes.png",
+       plot = s2_suffixes,
+       width = 16, height = 10, dpi = 300,
+       units = "in", bg = "transparent")
 
-# Repeat for prefixes:
-s1_prefixes <- mc_plots(df_s1, mc_s1, "prefix") + theme(legend.position = "none")
-s2_prefixes <- mc_plots(df_s2, mc_s2, "prefix")
+# Prefix plots
+s1_prefixes <- mc_plots(df_s1, mc_s1, "prefix", ylim = c(900, 250))
+s2_prefixes <- mc_plots(df_s2, mc_s2, "prefix", ylim = c(800, 250))
 
-combined_prefixes <- s1_prefixes + s2_prefixes + 
-  plot_layout(guides = "collect") &
-  theme(
-    legend.position = "right",
-    plot.margin = unit(c(0, 0, 0, 0), "cm")  # remove margins
-  )
+ggsave(filename = "/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/s1_prefixes.png",
+       plot = s1_prefixes,
+       width = 16, height = 10, dpi = 300,
+       units = "in", bg = "transparent")
 
-ggsave(filename = "/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/combined_prefixes.png",
-       plot = combined_prefixes,
-       width = 16, height = 6, dpi = 300,
-       units = "in",
-       bg = "transparent")
+ggsave(filename = "/Users/noahkhaloo/Desktop/Urmi_fieldwork/figures/s2_prefixes.png",
+       plot = s2_prefixes,
+       width = 16, height = 10, dpi = 300,
+       units = "in", bg = "transparent")
 
 
 

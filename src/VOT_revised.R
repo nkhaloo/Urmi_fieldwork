@@ -43,6 +43,7 @@ df <- df %>%
 
 # First, summarize data to get N per category
 df_summary <- df %>%
+  mutate(emphasis = factor(emphasis, levels = c("plain", "emphatic"))) %>%
   group_by(stop, emphasis) %>%
   summarise(
     mean_VOT = mean(VOT),
@@ -55,39 +56,39 @@ df_summary <- df %>%
 voiced <- ggplot(df_summary %>% filter(stop %in% c("b", "d", "g", "dʒ")),
                  aes(x = factor(stop, levels = c("b", "d", "g", "dʒ")),
                      y = mean_VOT, fill = emphasis)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9), alpha = 0.7) +
   geom_errorbar(aes(ymin = mean_VOT - SE, ymax = mean_VOT + SE),
                 position = position_dodge(width = 0.9), width = 0.2) +
   geom_text(aes(y = mean_VOT + SE + 8, label = N),
             position = position_dodge(width = 0.9), vjust = -0.5, size = 4.5) +
   labs(x = "Stop", y = "Mean VOT (ms)", title = "Voiced Stops") +
   theme_minimal() +
-  scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, y_max_s1)) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0))) +
   theme(axis.text.x = element_text(size = 14),
         panel.grid = element_blank(),
         axis.line = element_line(),
         aspect.ratio = 0.5) +
-  scale_fill_manual(values = c("plain" = "blue", "emphatic" = "red")) + 
+  scale_fill_manual(values = c("plain" = "black", "emphatic" = "grey")) + 
   coord_cartesian(ylim = c(0, 200))
 
 # Voiceless Stops plot with N labels
 voiceless <- ggplot(df_summary %>% filter(stop %in% c("p", "t", "k", "q", "tʃ")),
                     aes(x = factor(stop, levels = c("p", "t", "k", "q", "tʃ")),
                         y = mean_VOT, fill = emphasis)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9), alpha = 0.7) +
   geom_errorbar(aes(ymin = mean_VOT - SE, ymax = mean_VOT + SE),
                 position = position_dodge(width = 0.9), width = 0.2) +
   geom_text(aes(y = mean_VOT + SE + 8, label = N),
             position = position_dodge(width = 0.9), vjust = -0.5, size = 4.5) +
   labs(x = "Stop", y = "", title = "Voiceless Stops") +
   theme_minimal() +
-  scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, y_max_s1)) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0))) +
   theme(axis.text.x = element_text(size = 14),
         panel.grid = element_blank(),
         axis.text.y = element_blank(),
         axis.line = element_line(),
         aspect.ratio = 0.5) +
-  scale_fill_manual(values = c("plain" = "blue", "emphatic" = "red")) + 
+  scale_fill_manual(values = c("plain" = "black", "emphatic" = "grey")) + 
   coord_cartesian(ylim = c(0, 250)) 
 
 # Combine plots with shared legend

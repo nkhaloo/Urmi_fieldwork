@@ -98,10 +98,12 @@ confint(mod_s2, method = "Wald")
 
 # Summarize data including N
 df_s1_summary <- df_s1 %>%
+  mutate(emphasis = factor(emphasis, levels = c("plain", "emphatic"))) %>%
   group_by(fricative, emphasis) %>%
   summarise(mean_cog = mean(cog), SE = sd(cog)/sqrt(n()), N = n(), .groups = 'drop')
 
 df_s2_summary <- df_s2 %>%
+  mutate(emphasis = factor(emphasis, levels = c("plain", "emphatic"))) %>%
   group_by(fricative, emphasis) %>%
   summarise(mean_cog = mean(cog), SE = sd(cog)/sqrt(n()), N = n(), .groups = 'drop')
 # Explicit dodge width
@@ -113,26 +115,28 @@ y_max_s2 <- max(df_s2_summary$mean_cog + df_s2_summary$SE) + 400
 
 # Speaker 1 plot (title adjusted upwards)
 s1 <- ggplot(df_s1_summary, aes(x = fricative, y = mean_cog, fill = emphasis)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9), alpha = 0.7) +
   geom_errorbar(aes(ymin = mean_cog - SE, ymax = mean_cog + SE), position = pd, width = 0.2) +
   geom_text(aes(label = N, y = mean_cog + SE + 300), position = pd, size = 5) +
-  labs(x = "Fricative", y = "COG (dB)", title = "Speaker 1") +
+  labs(x = "Fricative", y = "COG (Hz)", title = "Speaker 1") +
   theme_classic() +
   scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, y_max_s1)) +
-  scale_fill_manual(values = c("plain" = "blue", "emphatic" = "red")) + 
+  scale_fill_manual(values = c("plain" = "black", "emphatic" = "grey")) + 
   theme(axis.text.x = element_text(size = 14),
-        plot.title = element_text(size = 16, hjust = 0, margin = margin(b = 20)))
+        axis.line = element_line(linewidth = 0.8),
+        plot.title = element_text(size = 18, hjust = 0, margin = margin(b = 20)))
 
 # Speaker 2 plot (title adjusted upwards)
 s2 <- ggplot(df_s2_summary, aes(x = fricative, y = mean_cog, fill = emphasis)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9), alpha = 0.7) +
   geom_errorbar(aes(ymin = mean_cog - SE, ymax = mean_cog + SE), position = pd, width = 0.2) +
   geom_text(aes(label = N, y = mean_cog + SE + 175), position = pd, size = 5) +
-  labs(x = "Fricative", y = "COG (dB)", title = "Speaker 2") +
-  scale_fill_manual(values = c("plain" = "blue", "emphatic" = "red")) + 
+  labs(x = "Fricative", y = "COG (Hz)", title = "Speaker 2") +
+  scale_fill_manual(values = c("plain" = "black", "emphatic" = "grey")) + 
   theme_classic() +
   scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, y_max_s2)) +
   theme(axis.text.x = element_text(size = 14),
+        axis.line = element_line(linewidth = 0.8),
         plot.title = element_text(size = 16, hjust = 0, margin = margin(b = 20)))
 
 # Combine plots
@@ -173,7 +177,7 @@ s1_poster <- ggplot(df_s1_summary, aes(x = fricative, y = mean_cog, fill = empha
   labs(x = NULL, y = NULL, title = "Speaker 1") +
   theme_classic(base_size = 34) +
   scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, y_max_s1)) +
-  scale_fill_manual(values = c("plain" = "blue", "emphatic" = "red")) + 
+  scale_fill_manual(values = c("plain" = "black", "emphatic" = "grey")) + 
   theme(
     axis.text.x = element_text(size = 55, face = "bold"),
     axis.text.y = element_text(size = 45, face = "bold"),
@@ -193,7 +197,7 @@ s2_poster <- ggplot(df_s2_summary, aes(x = fricative, y = mean_cog, fill = empha
   labs(x = NULL, y = NULL, title = "Speaker 2") +
   theme_classic(base_size = 34) +
   scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, y_max_s1)) +
-  scale_fill_manual(values = c("plain" = "blue", "emphatic" = "red")) + 
+  scale_fill_manual(values = c("plain" = "black", "emphatic" = "grey")) + 
   theme(
     axis.text.x = element_text(size = 55, face = "bold"),
     axis.text.y = element_text(size = 45, face = "bold"),
