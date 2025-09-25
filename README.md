@@ -3,7 +3,7 @@ This repository contains the code used in Khaloo (submitted). The acquisition of
 
 This project conducts an acoustic analysis on vowels and consonants in Jewish-Urmi (Lishan Didan, Glottolog: lish1246). 
 
-## `src`
+## src
 The `src` folder contains the following scripts:
 
 - `classification_task.R`: Carries out a classification task on Jewish-Urmi vowels using gradient boosted decision trees with different sets of acoustic features.  
@@ -11,19 +11,19 @@ The `src` folder contains the following scripts:
 - `VOT_revised.R`: Visualizes and analyzes Voice Onset Time for stops.  
 - `vowels_revised.R`: Visualizes and analyzes vowel formants.  
 
-## `Figures`
+## Figures
 The `Figures` folder contains the figures used in the paper.
 
-## `S1`
+## S1
 The `S1` folder contains the audio files for Speaker 1 (Female; native Jewish Urmi speaker; 69 y.o. at the time of recording).  
 
-## `S2`
+## S2
 The `S2` folder contains the audio files for Speaker 2 (Male; native Jewish Urmi speaker; 70 y.o. at the time of recording).  
 
-## `Praat scripts`
+## Praat scripts
 The `Praat scripts` folder contains the (modified) Praat scripts used for the acoustic analysis. 
 
-## `Metadata`
+## Metadata
 The `Metadata` folder contains the words collected in this study.  
 
 
